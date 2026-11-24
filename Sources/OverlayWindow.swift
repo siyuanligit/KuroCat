@@ -125,7 +125,7 @@ final class CatCanvasView: NSView {
         return CGPoint(x: localX, y: localY)
     }
 
-    /// Called on every 60fps tick to handle smart click-through AND petting strokes.
+    /// Called on every render tick (15-45 Hz) to handle smart click-through AND petting strokes.
     func updateHoverAndClickThrough() {
         guard let win = window else { return }
         let screenPt = NSEvent.mouseLocation

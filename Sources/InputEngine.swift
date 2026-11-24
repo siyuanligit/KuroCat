@@ -207,7 +207,7 @@ final class InputEngine {
         }
     }
 
-    /// Called at 60fps from the render loop to sample global cursor motion (requires zero permissions).
+    /// Called once per render tick (15-45 Hz, see AppDelegate.renderTick) to sample global cursor motion (requires zero permissions).
     func pollMouse(dt: CGFloat) {
         let loc = NSEvent.mouseLocation
         let dx = loc.x - lastMouseLocation.x
