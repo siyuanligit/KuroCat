@@ -397,6 +397,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 case .siamese: coatTitle = "Siamese Cat"
                 case .shorthair: coatTitle = "Silver Tabby Shorthair"
                 case .orangeWhite: coatTitle = "Orange & White Cat"
+                case .britishShorthair: coatTitle = "British Shorthair (Gray)"
                 }
             } else {
                 coatTitle = coat.rawValue
@@ -454,6 +455,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 case .classicMilk: kbTitle = "Classic Milk White"
                 case .midnightHacker: kbTitle = "Midnight Hacker Black"
                 case .retroCream: kbTitle = "Retro Cream Gray"
+                case .graphite: kbTitle = "Graphite Gray"
                 }
             } else {
                 kbTitle = theme.rawValue
@@ -791,7 +793,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             CatSettings.shared.eyeTheme = .siameseBlue
         case .shorthair:
             CatSettings.shared.eyeTheme = .referenceHazel
-        case .orangeWhite:
+        case .orangeWhite, .britishShorthair:
             CatSettings.shared.eyeTheme = .warmAmber
         }
         dressingRoom?.refresh()

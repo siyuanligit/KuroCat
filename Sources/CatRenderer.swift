@@ -430,7 +430,14 @@ enum CatRenderer {
             bodyColor = NSColor(calibratedRed: 0.89, green: 0.87, blue: 0.82, alpha: 1.0)
             borderColor = NSColor(calibratedRed: 0.20, green: 0.19, blue: 0.18, alpha: 1.0)
             wheelColor = NSColor(calibratedRed: 0.88, green: 0.42, blue: 0.24, alpha: 1.0)
+        case .graphite:
+            bodyColor = NSColor(calibratedRed: 0.27, green: 0.28, blue: 0.30, alpha: 1.0)
+            borderColor = NSColor(calibratedRed: 0.10, green: 0.10, blue: 0.11, alpha: 1.0)
+            wheelColor = NSColor(calibratedRed: 0.40, green: 0.41, blue: 0.43, alpha: 1.0)   // same grey family, a step lighter so it still reads
         }
+        // Click flash: green on the colourful themes, neutral white on graphite.
+        let flashColor = theme == .graphite ? NSColor(calibratedWhite: 1.0, alpha: 0.38)
+                                            : NSColor(calibratedRed: 0.79, green: 0.95, blue: 0.25, alpha: 0.38)
 
         // Mouse body (palm-rest dome toward cat at top, click buttons & scroll wheel away from cat at bottom!)
         ctx.setFillColor(bodyColor.cgColor)
@@ -441,7 +448,7 @@ enum CatRenderer {
             ctx.saveGState()
             ctx.addEllipse(in: bodyRect)
             ctx.clip()
-            ctx.setFillColor(NSColor(calibratedRed: 0.79, green: 0.95, blue: 0.25, alpha: 0.38 * physics.mousePressLeft.value).cgColor)
+            ctx.setFillColor(flashColor.withAlphaComponent(0.38 * physics.mousePressLeft.value).cgColor)
             ctx.fill(CGRect(x: 0, y: 0, width: 14, height: 17))
             ctx.restoreGState()
         }
@@ -449,7 +456,7 @@ enum CatRenderer {
             ctx.saveGState()
             ctx.addEllipse(in: bodyRect)
             ctx.clip()
-            ctx.setFillColor(NSColor(calibratedRed: 0.79, green: 0.95, blue: 0.25, alpha: 0.38 * physics.mousePressRight.value).cgColor)
+            ctx.setFillColor(flashColor.withAlphaComponent(0.38 * physics.mousePressRight.value).cgColor)
             ctx.fill(CGRect(x: -14, y: 0, width: 14, height: 17))
             ctx.restoreGState()
         }
@@ -509,6 +516,12 @@ enum CatRenderer {
             padColor  = NSColor(calibratedRed: 0.42, green: 0.39, blue: 0.35, alpha: 1.0)
             keyColor  = NSColor(calibratedRed: 0.54, green: 0.50, blue: 0.45, alpha: 1.0)
             accentColor = NSColor(calibratedRed: 0.88, green: 0.42, blue: 0.24, alpha: 1.0)
+        case .graphite:
+            baseColor = NSColor(calibratedRed: 0.08, green: 0.08, blue: 0.09, alpha: 1.0)
+            bodyColor = NSColor(calibratedRed: 0.17, green: 0.17, blue: 0.18, alpha: 1.0)
+            padColor  = NSColor(calibratedRed: 0.22, green: 0.22, blue: 0.24, alpha: 1.0)
+            keyColor  = NSColor(calibratedRed: 0.27, green: 0.28, blue: 0.30, alpha: 1.0)
+            accentColor = keyColor
         }
 
         // Ambient drop shadow beneath tablet
@@ -650,6 +663,10 @@ enum CatRenderer {
             barrelCol = NSColor(calibratedRed: 0.28, green: 0.26, blue: 0.24, alpha: 1.0)
             gripCol   = NSColor(calibratedRed: 0.42, green: 0.39, blue: 0.35, alpha: 1.0)
             ringCol   = NSColor(calibratedRed: 0.88, green: 0.42, blue: 0.24, alpha: 1.0)
+        case .graphite:
+            barrelCol = NSColor(calibratedRed: 0.18, green: 0.18, blue: 0.20, alpha: 1.0)
+            gripCol   = NSColor(calibratedRed: 0.27, green: 0.28, blue: 0.30, alpha: 1.0)
+            ringCol   = NSColor(calibratedRed: 0.40, green: 0.41, blue: 0.43, alpha: 1.0)
         }
 
         // Tapered pen silhouette (nib at x=0 -> tapered cone x=7 -> ergonomic barrel -> rounded eraser cap at x=length)
@@ -893,6 +910,12 @@ enum CatRenderer {
             keyColor = NSColor(calibratedRed: 0.90, green: 0.88, blue: 0.82, alpha: 1.0)
             keyBorderColor = NSColor(calibratedRed: 0.68, green: 0.65, blue: 0.60, alpha: 0.85)
             accentColor = NSColor(calibratedRed: 0.88, green: 0.42, blue: 0.24, alpha: 1.0)
+        case .graphite:
+            baseColor = NSColor(calibratedRed: 0.09, green: 0.09, blue: 0.10, alpha: 1.0)
+            deckColor = NSColor(calibratedRed: 0.14, green: 0.14, blue: 0.15, alpha: 1.0)
+            keyColor = NSColor(calibratedRed: 0.27, green: 0.28, blue: 0.30, alpha: 1.0)
+            keyBorderColor = NSColor(calibratedRed: 0.15, green: 0.15, blue: 0.16, alpha: 0.95)
+            accentColor = keyColor   // no accent keys: every key is the same grey
         }
 
         let lowerChassis = roundedQuadPath(
@@ -952,7 +975,7 @@ enum CatRenderer {
                         labelCenter = KeyboardLayout.screenQuadPoint(su: su0 + (su1 - su0) * 0.82, sv: (sv0 + sv1) * 0.5)
                     }
                     let textColor: NSColor
-                    if cap.isAmberAccent || style.theme != .midnightHacker {
+                    if style.theme != .graphite && (cap.isAmberAccent || style.theme != .midnightHacker) {
                         textColor = NSColor(calibratedRed: 0.14, green: 0.14, blue: 0.16, alpha: 0.78)
                     } else {
                         textColor = NSColor(calibratedRed: 0.88, green: 0.90, blue: 0.92, alpha: 0.82)
