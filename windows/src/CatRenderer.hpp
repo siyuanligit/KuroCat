@@ -220,7 +220,7 @@ public:
             drawHindFoot(g, seatX, seatY, physics, skin);
         }
 
-        // 7. 2.5D Eyes & Whiskers (+ optional nose/mouth, yawn, angry vein)
+        // 7. 2.5D Eyes & Whiskers (+ optional nose/mouth, yawn, sweat drop)
         drawHeadFeatures(g, headCenter, physics, settings.eyeTheme, skin);
 
         // 7b. Skin stickers anchored to head / neck / tail tip
@@ -1743,20 +1743,24 @@ private:
         float anger = std::clamp(physics.angerIntensity.value, 0.0f, 1.0f);
         if (anger > 0.25f) {
             float aAlpha = std::min(1.0f, (anger - 0.25f) / 0.35f);
-            float pulse = 1.0f + std::sin(physics.time * 14.0f) * 0.10f;
+            // Sweat drop slides down the head and fades out, then restarts
+            float phase = std::fmod(physics.time * 0.9f, 1.0f);
+            float fade = std::min(1.0f, (1.0f - phase) / 0.3f);
+            float a = aAlpha * fade;
             Pt pt = projectHead3D(28.0f, -22.0f, 24.0f, yawRad, pitchRad);
             GraphicsState as = g.Save();
-            g.TranslateTransform(pt.x, pt.y);
-            g.ScaleTransform(pulse, pulse);
-            Pen ap(Color((BYTE)(242 * aAlpha), 245, 56, 72), 2.0f);
-            ap.SetStartCap(LineCapRound); ap.SetEndCap(LineCapRound);
-            float d = 2.4f, r = 6.2f;
-            float dirs[4][2] = { {-1,-1}, {1,-1}, {-1,1}, {1,1} };
-            for (auto& dir : dirs) {
-                GraphicsPath vp;
-                addQuadBezier(vp, { dir[0]*r, dir[1]*d }, { dir[0]*d, dir[1]*d }, { dir[0]*d, dir[1]*r });
-                g.DrawPath(&ap, &vp);
-            }
+            g.TranslateTransform(pt.x, pt.y + phase * 6.0f);
+            GraphicsPath drop;
+            drop.AddBezier(0.0f, -6.5f, 0.8f, -3.5f, 3.6f, -1.0f, 3.6f, 2.0f);
+            drop.AddBezier(3.6f, 2.0f, 3.6f, 5.8f, -3.6f, 5.8f, -3.6f, 2.0f);
+            drop.AddBezier(-3.6f, 2.0f, -3.6f, -1.0f, -0.8f, -3.5f, 0.0f, -6.5f);
+            drop.CloseFigure();
+            SolidBrush dropFill(Color((BYTE)(235 * a), 133, 204, 255));
+            g.FillPath(&dropFill, &drop);
+            Pen dropEdge(Color((BYTE)(242 * a), 61, 138, 224), 1.2f);
+            g.DrawPath(&dropEdge, &drop);
+            SolidBrush shine(Color((BYTE)(217 * a), 255, 255, 255));
+            g.FillEllipse(&shine, -2.2f, 0.0f, 1.6f, 2.6f);
             g.Restore(as);
         }
         g.Restore(st);

@@ -1758,25 +1758,31 @@ enum CatRenderer {
         // 2. 3D-Projected Whiskers (outer-side whiskers poke out past silhouette when turning!)
         drawWhiskers3D(in: ctx, yawRad: yawRad, pitchRad: pitchRad, physics: physics, skin: skin)
 
-        // 3. Expressive emotion badges: Anger vein (💢) & Dizzy orbiting stars (✦) & Scruff pinch!
+        // 3. Expressive emotion badges: Sweat drop (💦) & Dizzy orbiting stars (✦) & Scruff pinch!
         let anger = max(0, min(1, physics.angerIntensity.value))
         if anger > 0.25 {
             let aAlpha = min(1.0, (anger - 0.25) / 0.35)
-            let pulse = 1.0 + sin(physics.time * 14.0) * 0.10
+            // Drop slides down the head and fades out, then restarts
+            let phase = CGFloat((physics.time * 0.9).truncatingRemainder(dividingBy: 1.0))
+            let fade = min(1.0, (1.0 - phase) / 0.3)
             let pt = projectHead3D(x: 28.0, y: -22.0, z: 24.0, yawRad: yawRad, pitchRad: pitchRad).pt
             ctx.saveGState()
-            ctx.translateBy(x: pt.x, y: pt.y)
-            ctx.scaleBy(x: pulse, y: pulse)
-            ctx.setStrokeColor(NSColor(calibratedRed: 0.96, green: 0.22, blue: 0.28, alpha: 0.95 * aAlpha).cgColor)
-            ctx.setLineWidth(2.0)
-            ctx.setLineCap(.round)
-            // Classic 4-corner anime anger vein mark
-            let d: CGFloat = 2.4, r: CGFloat = 6.2
-            for (sx, sy): (CGFloat, CGFloat) in [(-1,-1), (1,-1), (-1,1), (1,1)] {
-                ctx.move(to: CGPoint(x: sx * r, y: sy * d))
-                ctx.addQuadCurve(to: CGPoint(x: sx * d, y: sy * r), control: CGPoint(x: sx * d, y: sy * d))
-            }
+            ctx.translateBy(x: pt.x, y: pt.y + phase * 6.0)
+            let drop = CGMutablePath()
+            drop.move(to: CGPoint(x: 0, y: -6.5))
+            drop.addCurve(to: CGPoint(x: 3.6, y: 2), control1: CGPoint(x: 0.8, y: -3.5), control2: CGPoint(x: 3.6, y: -1))
+            drop.addCurve(to: CGPoint(x: -3.6, y: 2), control1: CGPoint(x: 3.6, y: 5.8), control2: CGPoint(x: -3.6, y: 5.8))
+            drop.addCurve(to: CGPoint(x: 0, y: -6.5), control1: CGPoint(x: -3.6, y: -1), control2: CGPoint(x: -0.8, y: -3.5))
+            drop.closeSubpath()
+            ctx.setFillColor(NSColor(calibratedRed: 0.52, green: 0.80, blue: 1.0, alpha: 0.92 * aAlpha * fade).cgColor)
+            ctx.addPath(drop)
+            ctx.fillPath()
+            ctx.setStrokeColor(NSColor(calibratedRed: 0.24, green: 0.54, blue: 0.88, alpha: 0.95 * aAlpha * fade).cgColor)
+            ctx.setLineWidth(1.2)
+            ctx.addPath(drop)
             ctx.strokePath()
+            ctx.setFillColor(NSColor(calibratedWhite: 1.0, alpha: 0.85 * aAlpha * fade).cgColor)
+            ctx.fillEllipse(in: CGRect(x: -2.2, y: 0.0, width: 1.6, height: 2.6))
             ctx.restoreGState()
         }
 

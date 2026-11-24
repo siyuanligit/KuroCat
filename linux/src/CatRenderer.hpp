@@ -1556,28 +1556,35 @@ private:
         if (physics.yawnAmount > 0.03f) drawYawnMouth(cr, yawRad, pitchRad, physics.yawnAmount, skin);
         drawWhiskers3D(cr, yawRad, pitchRad, physics, skin);
 
-        // Pulsing red anime anger vein (💢) when typing super fast
+        // Sweat drop (💦) sliding down the head when typing super fast
         float anger = std::clamp(physics.angerIntensity.value, 0.0f, 1.0f);
         if (anger > 0.12f) {
-            double pulse = 1.0 + std::sin(physics.time * 14.0f) * 0.12;
+            double phase = std::fmod((double)physics.time * 0.9, 1.0);
+            double fade = std::min(1.0, (1.0 - phase) / 0.3);
+            double a = anger * fade;
             double ax = 22.0 + yawRad * 8.0;
-            double ay = -23.0 + pitchRad * 4.0;
+            double ay = -23.0 + pitchRad * 4.0 + phase * 6.0;
             cairo_save(cr);
             cairo_translate(cr, ax, ay);
-            cairo_scale(cr, pulse, pulse);
-            cairo_set_source_rgba(cr, 0.94, 0.22, 0.22, 0.92 * anger);
-            cairo_set_line_width(cr, 2.2);
-            cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
-            cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
-            const double dirs[4][2] = { {-1,-1}, {1,-1}, {-1,1}, {1,1} };
-            for (int d = 0; d < 4; ++d) {
-                double sx = dirs[d][0], sy = dirs[d][1];
-                cairo_new_path(cr);
-                cairo_move_to(cr, sx * 2.0, sy * 6.0);
-                cairo_line_to(cr, sx * 2.0, sy * 2.0);
-                cairo_line_to(cr, sx * 6.0, sy * 2.0);
-                cairo_stroke(cr);
-            }
+            cairo_new_path(cr);
+            cairo_move_to(cr, 0.0, -6.5);
+            cairo_curve_to(cr, 0.8, -3.5, 3.6, -1.0, 3.6, 2.0);
+            cairo_curve_to(cr, 3.6, 5.8, -3.6, 5.8, -3.6, 2.0);
+            cairo_curve_to(cr, -3.6, -1.0, -0.8, -3.5, 0.0, -6.5);
+            cairo_close_path(cr);
+            cairo_set_source_rgba(cr, 0.52, 0.80, 1.0, 0.92 * a);
+            cairo_fill_preserve(cr);
+            cairo_set_source_rgba(cr, 0.24, 0.54, 0.88, 0.95 * a);
+            cairo_set_line_width(cr, 1.2);
+            cairo_stroke(cr);
+            cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 0.85 * a);
+            cairo_new_path(cr);
+            cairo_save(cr);
+            cairo_translate(cr, -1.4, 1.3);
+            cairo_scale(cr, 0.8, 1.3);
+            cairo_arc(cr, 0.0, 0.0, 1.0, 0.0, 2.0 * M_PI);
+            cairo_restore(cr);
+            cairo_fill(cr);
             cairo_restore(cr);
         }
 
