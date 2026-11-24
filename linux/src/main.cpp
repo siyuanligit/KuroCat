@@ -1242,7 +1242,7 @@ static void showPopupMenu(LinuxApp& app, GdkEventButton* evt) {
                 g_app->settings.customSkin.clear();
                 g_app->settings.eyeTheme = coat == CatCoatTheme::Siamese ? EyeColorTheme::SiameseBlue :
                     (coat == CatCoatTheme::ClassicBlack ? EyeColorTheme::NeonChartreuse :
-                    (coat == CatCoatTheme::Shorthair ? EyeColorTheme::ReferenceHazel : EyeColorTheme::WarmAmber));
+                    (coat == CatCoatTheme::Shorthair ? EyeColorTheme::ReferenceHazel : EyeColorTheme::WarmAmber)); // OrangeWhite & BritishShorthair: warm amber
                 g_app->settings.save();
                 refreshDressingRoom(*g_app);
             }), (gpointer)(intptr_t)c);
@@ -1252,6 +1252,7 @@ static void showPopupMenu(LinuxApp& app, GdkEventButton* evt) {
         addCoat(tr("挖煤暹罗猫", "Siamese Cat"), CatCoatTheme::Siamese);
         addCoat(tr("美短（银虎斑加白）", "Silver Tabby Shorthair"), CatCoatTheme::Shorthair);
         addCoat(tr("橘白猫", "Orange & White Cat"), CatCoatTheme::OrangeWhite);
+        addCoat(tr("英短蓝猫（灰毛橘黄瞳）", "British Shorthair (Gray)"), CatCoatTheme::BritishShorthair);
         // Imported skins (ids are 16 hex chars; the menu item keeps its own copy as object data).
         if (!app.skins.skins.empty()) gtk_menu_shell_append(GTK_MENU_SHELL(sub), gtk_separator_menu_item_new());
         for (const SkinSpec& s : app.skins.skins) {
@@ -1325,6 +1326,7 @@ static void showPopupMenu(LinuxApp& app, GdkEventButton* evt) {
         addKb(tr("经典奶白暖黄 (原版)", "Classic Milk White"), KeyboardTheme::ClassicMilk);
         addKb(tr("暗夜极客黑", "Midnight Hacker Black"), KeyboardTheme::MidnightHacker);
         addKb(tr("复古奶油灰", "Retro Cream Gray"), KeyboardTheme::RetroCream);
+        addKb(tr("深灰素色", "Graphite Gray"), KeyboardTheme::Graphite);
         GtkWidget* parent = gtk_menu_item_new_with_label(tr("键盘配色", "Keyboard Theme"));
         gtk_menu_item_set_submenu(GTK_MENU_ITEM(parent), sub);
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), parent);

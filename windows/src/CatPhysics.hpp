@@ -16,13 +16,15 @@ enum class CatCoatTheme : int {
     Shorthair = 2,
     OrangeWhite = 3,
     Dazed = 4,
-    Tabby = 5
+    Tabby = 5,
+    BritishShorthair = 6
 };
 
 enum class KeyboardTheme : int {
     ClassicMilk = 0,
     MidnightHacker = 1,
-    RetroCream = 2
+    RetroCream = 2,
+    Graphite = 3
 };
 
 enum class EyeColorTheme : int {
@@ -54,8 +56,8 @@ struct CatSettings {
     bool alwaysOnTop = true;
     bool runAsAdmin = false; // relaunch elevated so keys typed into admin-level apps/games are visible (UIPI)
     float scale = 1.0f;
-    CatCoatTheme coatTheme = CatCoatTheme::ClassicBlack;
-    KeyboardTheme keyboardTheme = KeyboardTheme::ClassicMilk;
+    CatCoatTheme coatTheme = CatCoatTheme::BritishShorthair;
+    KeyboardTheme keyboardTheme = KeyboardTheme::Graphite;
     EyeColorTheme eyeTheme = EyeColorTheme::NeonChartreuse;
     // Content id (16 hex chars) of the imported .kurocat skin in use; empty = the built-in coatTheme.
     std::string customSkin;
@@ -87,9 +89,9 @@ struct CatSettings {
         alwaysOnTop      = readDword(L"AlwaysOnTop", 1) != 0;
         runAsAdmin       = readDword(L"RunAsAdmin", 0) != 0;
         scale            = std::clamp((float)readDword(L"ScalePct", 100) / 100.0f, 0.5f, 2.0f);
-        coatTheme        = (CatCoatTheme)std::clamp((int)readDword(L"CoatTheme", 0), 0, static_cast<int>(CatCoatTheme::Tabby));
-        keyboardTheme    = (KeyboardTheme)std::clamp((int)readDword(L"KeyboardTheme", 0), 0, 2);
-        eyeTheme         = (EyeColorTheme)std::clamp((int)readDword(L"EyeTheme", 0), 0, (int)EyeColorTheme::OliveGold);
+        coatTheme        = (CatCoatTheme)std::clamp((int)readDword(L"CoatTheme", (DWORD)CatCoatTheme::BritishShorthair), 0, static_cast<int>(CatCoatTheme::BritishShorthair));
+        keyboardTheme    = (KeyboardTheme)std::clamp((int)readDword(L"KeyboardTheme", (DWORD)KeyboardTheme::Graphite), 0, 3);
+        eyeTheme         = (EyeColorTheme)std::clamp((int)readDword(L"EyeTheme", (DWORD)EyeColorTheme::WarmAmber), 0, (int)EyeColorTheme::OliveGold);
         {
             wchar_t buf[32] = {0};
             DWORD type = 0, sz = sizeof(buf) - sizeof(wchar_t);

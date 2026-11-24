@@ -15,13 +15,15 @@ enum class CatCoatTheme : int {
     ClassicBlack = 0,
     Siamese = 1,
     Shorthair = 2,
-    OrangeWhite = 3
+    OrangeWhite = 3,
+    BritishShorthair = 4
 };
 
 enum class KeyboardTheme : int {
     ClassicMilk = 0,
     MidnightHacker = 1,
-    RetroCream = 2
+    RetroCream = 2,
+    Graphite = 3
 };
 
 enum class EyeColorTheme : int {
@@ -54,9 +56,9 @@ struct CatSettings {
     // integrated or 国产 GPUs, VMs) and made the whole desktop lag. Default is adaptive 30/20/10fps.
     bool highFrameRate = false;
     float scale = 1.0f;
-    CatCoatTheme coatTheme = CatCoatTheme::ClassicBlack;
-    KeyboardTheme keyboardTheme = KeyboardTheme::ClassicMilk;
-    EyeColorTheme eyeTheme = EyeColorTheme::NeonChartreuse;
+    CatCoatTheme coatTheme = CatCoatTheme::BritishShorthair;
+    KeyboardTheme keyboardTheme = KeyboardTheme::Graphite;
+    EyeColorTheme eyeTheme = EyeColorTheme::WarmAmber;
     // Content id of the imported .kurocat skin in use; empty = the built-in coatTheme.
     std::string customSkin;
     int posX = -99999;
@@ -100,8 +102,8 @@ struct CatSettings {
                 else if (k == "alwaysOnTop") alwaysOnTop = (std::stoi(v) != 0);
                 else if (k == "highFrameRate") highFrameRate = (std::stoi(v) != 0);
                 else if (k == "scale") scale = std::clamp(std::stof(v), 0.5f, 2.0f);
-                else if (k == "coatTheme") coatTheme = (CatCoatTheme)std::clamp(std::stoi(v), 0, 3);
-                else if (k == "keyboardTheme") keyboardTheme = (KeyboardTheme)std::clamp(std::stoi(v), 0, 2);
+                else if (k == "coatTheme") coatTheme = (CatCoatTheme)std::clamp(std::stoi(v), 0, 4);
+                else if (k == "keyboardTheme") keyboardTheme = (KeyboardTheme)std::clamp(std::stoi(v), 0, 3);
                 else if (k == "eyeTheme") eyeTheme = (EyeColorTheme)std::clamp(std::stoi(v), 0, 5);
                 else if (k == "customSkin") customSkin = v.size() == 16 && v.find_first_not_of("0123456789abcdef") == std::string::npos ? v : "";
                 else if (k == "posX") posX = std::stoi(v);

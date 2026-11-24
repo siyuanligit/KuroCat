@@ -35,7 +35,7 @@ inline const SkinSpec& builtInSkin(CatCoatTheme coat) {
             }
             return rings;
         };
-        std::vector<SkinSpec> v(4);
+        std::vector<SkinSpec> v(5);
         SkinSpec& k = v[0];
         k.id = "builtin:0"; k.name = "经典小黑猫"; k.builtIn = true;
         k.palette.body = k.palette.legs = k.palette.paws = k.palette.earOuter = k.palette.tail = black;
@@ -75,10 +75,17 @@ inline const SkinSpec& builtInSkin(CatCoatTheme coat) {
         o.headSurface = SkinHeadSurface::Dome; o.shape.pawStagger = 0;
         o.marks = skinMarksFromCoat(orangeWhiteMarks());
         for (auto& m : tailRings(0xA57543)) o.marks.push_back(m);
+        // Solid British Blue (dark gray, no markings); eyes come from the eye-colour menu (paired: warm amber).
+        SkinSpec& g = v[4];
+        g.id = "builtin:4"; g.name = "英短蓝猫（灰毛橘黄瞳）"; g.builtIn = true;
+        g.palette.body = g.palette.legs = g.palette.paws = g.palette.earOuter = g.palette.tail = SkinColor::hex(0x3A3F47);
+        g.palette.earInner = SkinColor::hex(0xB9A4A4); g.palette.nose = SkinColor::hex(0x9C7F82);
+        g.palette.whiskers = SkinColor::hex(0xD8DCE0, 0.68); g.palette.crease = SkinColor::hex(0x181B20, 0.75);
+        g.headSurface = SkinHeadSurface::Dome; g.shape.pawStagger = 0;
         for (SkinSpec& b : v) b.idleLegsTinted = false;
         return v;
     }();
-    int i = std::clamp((int)coat, 0, 3);
+    int i = std::clamp((int)coat, 0, 4);
     return skins[(size_t)i];
 }
 
@@ -554,7 +561,9 @@ private:
         cairo_fill(cr);
 
         RGBA bodyCol, borderCol, wheelCol;
-        if (theme == KeyboardTheme::MidnightHacker) {
+        if (theme == KeyboardTheme::Graphite) {
+            bodyCol = {0.27, 0.28, 0.30, 1.0}; borderCol = {0.10, 0.10, 0.11, 1.0}; wheelCol = {0.40, 0.41, 0.43, 1.0};  // wheel: same grey, a step lighter
+        } else if (theme == KeyboardTheme::MidnightHacker) {
             bodyCol = {0.20, 0.21, 0.24, 1.0}; borderCol = {0.08, 0.08, 0.10, 1.0}; wheelCol = {0.78, 0.95, 0.25, 1.0};
         } else if (theme == KeyboardTheme::RetroCream) {
             bodyCol = {0.89, 0.87, 0.82, 1.0}; borderCol = {0.20, 0.19, 0.18, 1.0}; wheelCol = {0.88, 0.42, 0.24, 1.0};
@@ -571,12 +580,14 @@ private:
             cairo_save(cr);
             cairo_clip(cr);
             if (physics.mousePressLeft.value > 0.05f) {
-                cairo_set_source_rgba(cr, 0.79, 0.95, 0.25, 0.38 * physics.mousePressLeft.value);
+                if (theme == KeyboardTheme::Graphite) cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 0.38 * physics.mousePressLeft.value);
+                else cairo_set_source_rgba(cr, 0.79, 0.95, 0.25, 0.38 * physics.mousePressLeft.value);
                 cairo_rectangle(cr, 0, 0, 14, 17);
                 cairo_fill(cr);
             }
             if (physics.mousePressRight.value > 0.05f) {
-                cairo_set_source_rgba(cr, 0.79, 0.95, 0.25, 0.38 * physics.mousePressRight.value);
+                if (theme == KeyboardTheme::Graphite) cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 0.38 * physics.mousePressRight.value);
+                else cairo_set_source_rgba(cr, 0.79, 0.95, 0.25, 0.38 * physics.mousePressRight.value);
                 cairo_rectangle(cr, -14, 0, 14, 17);
                 cairo_fill(cr);
             }
@@ -617,7 +628,10 @@ private:
         constexpr float depth = 3.6f;
 
         RGBA baseCol, bodyCol, padCol, keyCol, accentCol;
-        if (theme == KeyboardTheme::MidnightHacker) {
+        if (theme == KeyboardTheme::Graphite) {
+            baseCol = {0.08,0.08,0.09,1}; bodyCol = {0.17,0.17,0.18,1};
+            padCol = {0.22,0.22,0.24,1}; keyCol = {0.27,0.28,0.30,1}; accentCol = keyCol;
+        } else if (theme == KeyboardTheme::MidnightHacker) {
             baseCol = {0.05,0.05,0.07,1}; bodyCol = {0.11,0.12,0.15,1};
             padCol = {0.16,0.17,0.21,1}; keyCol = {0.24,0.25,0.30,1}; accentCol = {0.78,0.95,0.25,1};
         } else if (theme == KeyboardTheme::RetroCream) {
@@ -730,7 +744,9 @@ private:
 
     static void drawStylusBody(cairo_t* cr, double len, KeyboardTheme theme, EyeColorTheme eyeTheme, float pressed) {
         RGBA barrelCol, gripCol, ringCol;
-        if (theme == KeyboardTheme::MidnightHacker) {
+        if (theme == KeyboardTheme::Graphite) {
+            barrelCol = {0.18,0.18,0.20,1}; gripCol = {0.27,0.28,0.30,1}; ringCol = {0.40,0.41,0.43,1};
+        } else if (theme == KeyboardTheme::MidnightHacker) {
             barrelCol = {0.13,0.14,0.17,1}; gripCol = {0.22,0.24,0.29,1}; ringCol = {0.78,0.95,0.25,1};
         } else if (theme == KeyboardTheme::RetroCream) {
             barrelCol = {0.28,0.26,0.24,1}; gripCol = {0.42,0.39,0.35,1}; ringCol = {0.88,0.42,0.24,1};
@@ -854,7 +870,10 @@ private:
         cairo_fill(cr);
 
         RGBA baseCol, deckCol, keyCol, borderCol, accentCol;
-        if (theme == KeyboardTheme::MidnightHacker) {
+        if (theme == KeyboardTheme::Graphite) {
+            baseCol = {0.09, 0.09, 0.10, 1}; deckCol = {0.14, 0.14, 0.15, 1};
+            keyCol = {0.27, 0.28, 0.30, 1}; borderCol = {0.15, 0.15, 0.16, 0.95}; accentCol = keyCol;  // no accent keys
+        } else if (theme == KeyboardTheme::MidnightHacker) {
             baseCol = {0.06, 0.06, 0.08, 1}; deckCol = {0.10, 0.11, 0.13, 1};
             keyCol = {0.21, 0.22, 0.25, 1}; borderCol = {0.11, 0.11, 0.13, 0.95}; accentCol = {0.77, 0.94, 0.25, 1};
         } else if (theme == KeyboardTheme::RetroCream) {
@@ -991,7 +1010,7 @@ private:
                         cx = sp.x;
                         cy = sp.y + dy;
                     }
-                    if (cap.isAmberAccent || theme != KeyboardTheme::MidnightHacker) {
+                    if (theme != KeyboardTheme::Graphite && (cap.isAmberAccent || theme != KeyboardTheme::MidnightHacker)) {
                         cairo_set_source_rgba(cr, 0.14, 0.14, 0.16, 0.78);
                     } else {
                         cairo_set_source_rgba(cr, 0.88, 0.90, 0.92, 0.82);

@@ -35,7 +35,7 @@ inline const SkinSpec& builtInSkin(CatCoatTheme coat) {
             }
             return rings;
         };
-        std::vector<SkinSpec> v(6);
+        std::vector<SkinSpec> v(7);
         SkinSpec& k = v[0];
         k.id = "builtin:0"; k.name = "经典小黑猫"; k.builtIn = true;
         k.palette.body = k.palette.legs = k.palette.paws = k.palette.earOuter = k.palette.tail = black;
@@ -94,10 +94,17 @@ inline const SkinSpec& builtInSkin(CatCoatTheme coat) {
         t.palette.tail = c8(163, 143, 117);
         t.palette.whiskers = c8(104, 85, 65, 174); t.palette.crease = c8(104, 85, 65, 255);
 
+        // Solid British Blue (dark gray, no markings); eyes come from the eye-colour menu (paired: warm amber).
+        SkinSpec& g = v[6];
+        g.id = "builtin:6"; g.name = "英短蓝猫（灰毛橘黄瞳）"; g.builtIn = true;
+        g.palette.body = g.palette.legs = g.palette.paws = g.palette.earOuter = g.palette.tail = c8(0x3A, 0x3F, 0x47);
+        g.palette.earInner = c8(0xB9, 0xA4, 0xA4); g.palette.nose = c8(0x9C, 0x7F, 0x82);
+        g.palette.whiskers = c8(0xD8, 0xDC, 0xE0, 174); g.palette.crease = c8(0x18, 0x1B, 0x20, 192);
+        g.headSurface = SkinHeadSurface::Dome; g.shape.pawStagger = 0;
         for (SkinSpec& b : v) b.idleLegsTinted = false;
         return v;
     }();
-    int i = std::clamp((int)coat, 0, static_cast<int>(CatCoatTheme::Tabby));
+    int i = std::clamp((int)coat, 0, static_cast<int>(CatCoatTheme::BritishShorthair));
     return skins[(size_t)i];
 }
 
@@ -586,7 +593,9 @@ private:
         g.FillEllipse(&shadowBrush, -13.5f, -9.5f, 27.0f, 31.0f);
 
         Color bodyCol, borderCol, wheelCol;
-        if (theme == KeyboardTheme::MidnightHacker) {
+        if (theme == KeyboardTheme::Graphite) {
+            bodyCol = Color(255, 69, 71, 77); borderCol = Color(255, 26, 26, 28); wheelCol = Color(255, 102, 105, 110);  // wheel: same grey, a step lighter
+        } else if (theme == KeyboardTheme::MidnightHacker) {
             bodyCol = Color(255, 51, 54, 61); borderCol = Color(255, 20, 20, 26); wheelCol = Color(255, 199, 242, 64);
         } else if (theme == KeyboardTheme::RetroCream) {
             bodyCol = Color(255, 227, 222, 209); borderCol = Color(255, 51, 48, 46); wheelCol = Color(255, 224, 107, 61);
@@ -603,11 +612,13 @@ private:
             GraphicsState cs = g.Save();
             g.SetClip(&clipPath);
             if (physics.mousePressLeft.value > 0.05f) {
-                SolidBrush hb(Color((BYTE)(96 * physics.mousePressLeft.value), 201, 242, 64));
+                SolidBrush hb(theme == KeyboardTheme::Graphite ? Color((BYTE)(96 * physics.mousePressLeft.value), 255, 255, 255)
+                                                               : Color((BYTE)(96 * physics.mousePressLeft.value), 201, 242, 64));
                 g.FillRectangle(&hb, 0.0f, 0.0f, 14.0f, 17.0f);
             }
             if (physics.mousePressRight.value > 0.05f) {
-                SolidBrush hb(Color((BYTE)(96 * physics.mousePressRight.value), 201, 242, 64));
+                SolidBrush hb(theme == KeyboardTheme::Graphite ? Color((BYTE)(96 * physics.mousePressRight.value), 255, 255, 255)
+                                                               : Color((BYTE)(96 * physics.mousePressRight.value), 201, 242, 64));
                 g.FillRectangle(&hb, -14.0f, 0.0f, 14.0f, 17.0f);
             }
             g.Restore(cs);
@@ -639,7 +650,10 @@ private:
         constexpr float depth = 3.6f;
 
         Color baseCol, bodyCol, padCol, keyCol, accentCol;
-        if (theme == KeyboardTheme::MidnightHacker) {
+        if (theme == KeyboardTheme::Graphite) {
+            baseCol = Color(255, 20, 20, 23); bodyCol = Color(255, 43, 43, 46);
+            padCol = Color(255, 56, 56, 61); keyCol = Color(255, 69, 71, 77); accentCol = keyCol;
+        } else if (theme == KeyboardTheme::MidnightHacker) {
             baseCol = Color(255, 13, 13, 18); bodyCol = Color(255, 28, 31, 38);
             padCol = Color(255, 41, 43, 54); keyCol = Color(255, 61, 64, 77); accentCol = Color(255, 199, 242, 64);
         } else if (theme == KeyboardTheme::RetroCream) {
@@ -761,7 +775,9 @@ private:
     static void drawStylusBody(Gdiplus::Graphics& g, float len, KeyboardTheme theme, EyeColorTheme eyeTheme, float pressed) {
         using namespace Gdiplus;
         Color barrelCol, gripCol, ringCol;
-        if (theme == KeyboardTheme::MidnightHacker) {
+        if (theme == KeyboardTheme::Graphite) {
+            barrelCol = Color(255, 46, 46, 51); gripCol = Color(255, 69, 71, 77); ringCol = Color(255, 102, 105, 110);
+        } else if (theme == KeyboardTheme::MidnightHacker) {
             barrelCol = Color(255, 33, 36, 43); gripCol = Color(255, 56, 61, 74); ringCol = Color(255, 199, 242, 64);
         } else if (theme == KeyboardTheme::RetroCream) {
             barrelCol = Color(255, 71, 66, 61); gripCol = Color(255, 107, 99, 89); ringCol = Color(255, 224, 107, 61);
@@ -876,7 +892,10 @@ private:
         }
 
         Color baseCol, deckCol, keyCol, borderCol, accentCol;
-        if (theme == KeyboardTheme::MidnightHacker) {
+        if (theme == KeyboardTheme::Graphite) {
+            baseCol = Color(255, 23, 23, 26); deckCol = Color(255, 36, 36, 38);
+            keyCol = Color(255, 69, 71, 77); borderCol = Color(242, 38, 38, 41); accentCol = keyCol;  // no accent keys
+        } else if (theme == KeyboardTheme::MidnightHacker) {
             baseCol = Color(255, 15, 15, 20); deckCol = Color(255, 26, 28, 33);
             keyCol = Color(255, 54, 56, 64); borderCol = Color(242, 28, 28, 33); accentCol = Color(255, 196, 240, 64);
         } else if (theme == KeyboardTheme::RetroCream) {
@@ -1030,7 +1049,7 @@ private:
                         cx = sp.x;
                         cy = sp.y + dy;
                     }
-                    Color txtCol = (cap.isAmberAccent || theme != KeyboardTheme::MidnightHacker)
+                    Color txtCol = (theme != KeyboardTheme::Graphite && (cap.isAmberAccent || theme != KeyboardTheme::MidnightHacker))
                         ? Color(198, 36, 36, 41)
                         : Color(210, 224, 230, 235);
                     SolidBrush tb(txtCol);

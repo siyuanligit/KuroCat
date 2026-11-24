@@ -115,6 +115,8 @@ enum MenuCmd : UINT {
     CMD_TOGGLE_RUN_AS_ADMIN,
     CMD_QUIT,
     CMD_COAT_TABBY,
+    CMD_COAT_BRITISH,
+    CMD_KB_GRAPHITE,
     CMD_EYE_OLIVE_GOLD,
     CMD_TABLET_AUTO,
     CMD_TABLET_ON,
@@ -1383,6 +1385,7 @@ void showContextMenu(AppState& app, POINT screenPt) {
     AppendMenuW(coatMenu, MF_STRING | coatCheck(CatCoatTheme::OrangeWhite), CMD_COAT_ORANGE_WHITE, tr(L"\u6A58\u767D\u732B", L"Orange & White Cat"));
     AppendMenuW(coatMenu, MF_STRING | coatCheck(CatCoatTheme::Dazed), CMD_COAT_DAZED, tr(L"\u5446\u732B", L"Dazed Cat"));
     AppendMenuW(coatMenu, MF_STRING | coatCheck(CatCoatTheme::Tabby), CMD_COAT_TABBY, tr(L"\u72F8\u82B1\u732B", L"Tabby Cat"));
+    AppendMenuW(coatMenu, MF_STRING | coatCheck(CatCoatTheme::BritishShorthair), CMD_COAT_BRITISH, tr(L"\u82F1\u77ED\u84DD\u732B\uFF08\u7070\u6BDB\u6A58\u9EC4\u77B3\uFF09", L"British Shorthair (Gray)"));
     size_t listed = std::min<size_t>(app.skins.skins.size(), CMD_SKIN_RANGE);
     if (listed) AppendMenuW(coatMenu, MF_SEPARATOR, 0, nullptr);
     for (size_t i = 0; i < listed; ++i) {
@@ -1405,6 +1408,7 @@ void showContextMenu(AppState& app, POINT screenPt) {
     AppendMenuW(kbMenu, MF_STRING | (app.settings.keyboardTheme == KeyboardTheme::ClassicMilk ? MF_CHECKED : 0), CMD_KB_MILK, tr(L"\u7ECF\u5178\u5976\u767D\u6696\u9EC4 (\u539F\u7248)", L"Classic Milk White"));
     AppendMenuW(kbMenu, MF_STRING | (app.settings.keyboardTheme == KeyboardTheme::MidnightHacker ? MF_CHECKED : 0), CMD_KB_HACKER, tr(L"\u6697\u591C\u6781\u5BA2\u9ED1", L"Midnight Hacker Black"));
     AppendMenuW(kbMenu, MF_STRING | (app.settings.keyboardTheme == KeyboardTheme::RetroCream ? MF_CHECKED : 0), CMD_KB_RETRO, tr(L"\u590D\u53E4\u5976\u6CB9\u7070", L"Retro Cream Gray"));
+    AppendMenuW(kbMenu, MF_STRING | (app.settings.keyboardTheme == KeyboardTheme::Graphite ? MF_CHECKED : 0), CMD_KB_GRAPHITE, tr(L"\u6DF1\u7070\u7D20\u8272", L"Graphite Gray"));
     AppendMenuW(menu, MF_POPUP, (UINT_PTR)kbMenu, tr(L"\u952E\u76D8\u914D\u8272", L"Keyboard Theme"));
 
     // Eye Color submenu
@@ -1591,6 +1595,12 @@ void showContextMenu(AppState& app, POINT screenPt) {
             app.settings.eyeTheme = cmd == CMD_COAT_SHORTHAIR ? EyeColorTheme::ReferenceHazel : EyeColorTheme::WarmAmber;
             app.settings.saveToRegistry();
             break;
+        case CMD_COAT_BRITISH:
+            app.settings.customSkin.clear();
+            app.settings.coatTheme = CatCoatTheme::BritishShorthair;
+            app.settings.eyeTheme = EyeColorTheme::WarmAmber;
+            app.settings.saveToRegistry();
+            break;
         case CMD_COAT_DAZED:
             app.settings.customSkin.clear();
             app.settings.coatTheme = CatCoatTheme::Dazed;
@@ -1603,6 +1613,7 @@ void showContextMenu(AppState& app, POINT screenPt) {
         case CMD_KB_MILK:   app.settings.keyboardTheme = KeyboardTheme::ClassicMilk; app.settings.saveToRegistry(); break;
         case CMD_KB_HACKER: app.settings.keyboardTheme = KeyboardTheme::MidnightHacker; app.settings.saveToRegistry(); break;
         case CMD_KB_RETRO:  app.settings.keyboardTheme = KeyboardTheme::RetroCream; app.settings.saveToRegistry(); break;
+        case CMD_KB_GRAPHITE: app.settings.keyboardTheme = KeyboardTheme::Graphite; app.settings.saveToRegistry(); break;
         case CMD_EYE_LIME:  app.settings.eyeTheme = EyeColorTheme::NeonChartreuse; app.settings.saveToRegistry(); break;
         case CMD_EYE_BLUE:  app.settings.eyeTheme = EyeColorTheme::SiameseBlue; app.settings.saveToRegistry(); break;
         case CMD_EYE_AMBER: app.settings.eyeTheme = EyeColorTheme::WarmAmber; app.settings.saveToRegistry(); break;
