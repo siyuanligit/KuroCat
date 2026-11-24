@@ -132,9 +132,15 @@ KuroCat/
 ├── build.sh                   # macOS universal binary build script
 ├── windows/                   # Windows native C++17 (Win32 + GDI+ + Raw Input)
 ├── linux/                     # Linux & UOS native C++17 (GTK3 + Cairo + XInput2 + evdev)
-│   ├── src/                   # KeyMap / InputEngine / CatPhysics / CatRenderer / main.cpp
+│   ├── src/                   # KeyMap / InputEngine / CatPhysics / CatRenderer / SkinLibrary / main.cpp
 │   ├── build.sh               # Local build script
 │   └── build_deb.sh           # Debian / UOS .deb packager
+├── shared/                    # Shared by Windows & Linux: SkinSpec.hpp (.kurocat parser), CoatPatterns.hpp
+├── skins/                     # Built-in coat .kurocat skins and samples
+├── docs/                      # Skin format spec (skin-format.md) and screenshots
+├── scripts/                   # Skin / eye-closure checks, coat pattern generator, macOS signing-cert helper
+├── tests/                     # Skin parsing, skin rendering and eye-closure tests
+├── assets/                    # README demo GIFs and preview images
 └── .github/workflows/build.yml # Automated multi-platform release workflow
 ```
 

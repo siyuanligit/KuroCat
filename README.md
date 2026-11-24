@@ -135,9 +135,15 @@ KuroCat/
 ├── build.sh                   # macOS 一键通用二进制编译脚本
 ├── windows/                   # Windows 原生 C++17 (Win32 + GDI+ + Raw Input)
 ├── linux/                     # Linux & 统信 UOS 原生 C++17 (GTK3 + Cairo + XInput2 + evdev)
-│   ├── src/                   # KeyMap / InputEngine / CatPhysics / CatRenderer / main.cpp
+│   ├── src/                   # KeyMap / InputEngine / CatPhysics / CatRenderer / SkinLibrary / main.cpp
 │   ├── build.sh               # 本地编译脚本
 │   └── build_deb.sh           # 一键打包 Debian / 统信 UOS .deb 安装包
+├── shared/                    # Windows / Linux 共用：SkinSpec.hpp (.kurocat 解析) 与 CoatPatterns.hpp
+├── skins/                     # 内置毛色 .kurocat 皮肤与示例
+├── docs/                      # 皮肤格式规范 (skin-format.md) 与截图
+├── scripts/                   # 皮肤 / 闭眼检查、毛色花纹生成、macOS 签名证书脚本
+├── tests/                     # 皮肤格式解析、皮肤渲染、闭眼等测试
+├── assets/                    # README 演示 GIF 与预览图
 └── .github/workflows/build.yml # macOS + Windows + Linux (x86_64 & arm64) 全平台自动发版
 ```
 
