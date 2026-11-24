@@ -421,6 +421,16 @@ final class InputEngine {
 
         IOHIDManagerSetDeviceMatchingMultiple(manager, matches as CFArray)
 
+        // handleHIDValue only reads keys, mouse buttons and the Apple Fn key. Without this filter every
+        // pointer X/Y/wheel report (hundreds per second while the mouse moves) wakes the main thread
+        // just to be discarded; cursor motion is sampled by pollMouse() instead.
+        let valueMatches: [[String: Any]] = [
+            [kIOHIDElementUsagePageKey as String: kHIDPage_KeyboardOrKeypad],
+            [kIOHIDElementUsagePageKey as String: kHIDPage_Button],
+            [kIOHIDElementUsagePageKey as String: 0xFF, kIOHIDElementUsageKey as String: 0x03]
+        ]
+        IOHIDManagerSetInputValueMatchingMultiple(manager, valueMatches as CFArray)
+
         let context = Unmanaged.passUnretained(self).toOpaque()
         IOHIDManagerRegisterInputValueCallback(manager, { ctx, _, _, value in
             guard let ctx else { return }
