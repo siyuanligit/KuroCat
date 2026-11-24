@@ -23,7 +23,7 @@ static SkinSpec accepts(const std::string& json) {
 
 int main() {
     // Templates + sample from the repo
-    for (const char* f : {"skins/black.kurocat", "skins/siamese.kurocat", "skins/shorthair.kurocat", "skins/orangeWhite.kurocat",
+    for (const char* f : {"skins/black.kurocat", "skins/siamese.kurocat", "skins/shorthair.kurocat", "skins/orangeWhite.kurocat", "skins/britishShorthair.kurocat",
                           "skins/samples/curve-regions-demo.kurocat"}) {
         SkinSpec s; std::string err;
         bool ok = SkinSpec::loadFile(f, s, err);
