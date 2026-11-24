@@ -12,7 +12,7 @@ KuroCat 的猫是**实时绘制的矢量**（头会转、爪子会去够键盘�
   - `formatVersion` 大于 1 → 拒绝，提示“请先升级 KuroCat”。
 - 参考实现：`shared/SkinSpec.hpp`（C++，Windows/Linux）与 `Sources/CatPhysics.swift` 中的 `SkinSpec`（Swift，macOS）。
 - 模板：`skins/black.kurocat`、`skins/siamese.kurocat`、`skins/shorthair.kurocat`、`skins/orangeWhite.kurocat`
-  （四款内置毛色，由 `scripts/generate-coat-patterns.py` 生成）；示例：`skins/samples/curve-regions-demo.kurocat`。
+  （四款内置毛色，由 `scripts/generate-coat-patterns.py` 生成）、`skins/britishShorthair.kurocat`（纯灰毛 + 橘黄瞳的英短蓝猫，用 `iris` 覆盖眼睛颜色，需在「猫咪皮肤」里导入）；示例：`skins/samples/curve-regions-demo.kurocat`。
 
 ## 1. 顶层字段
 
