@@ -743,12 +743,17 @@ enum CatRenderer {
         let image: CGImage
         let bounds: CGRect
 
-        init?(bounds: CGRect, scale: CGSize, draw: (CGContext) -> Void) {
+        /// BGRA premultiplied, the layout window backing stores use. Matching it (and the destination's
+        /// colour space) lets Core Graphics blit the cached image without a per-frame pixel conversion.
+        private static let nativeBitmapInfo = CGImageAlphaInfo.premultipliedFirst.rawValue
+            | CGBitmapInfo.byteOrder32Little.rawValue
+
+        init?(bounds: CGRect, scale: CGSize, colorSpace: CGColorSpace, draw: (CGContext) -> Void) {
             let pixels = CGRect(x: bounds.minX * scale.width, y: bounds.minY * scale.height,
                                 width: bounds.width * scale.width, height: bounds.height * scale.height).integral
             guard let ctx = CGContext(data: nil, width: Int(pixels.width), height: Int(pixels.height),
-                                      bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
-                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+                                      bitsPerComponent: 8, bytesPerRow: 0, space: colorSpace,
+                                      bitmapInfo: Self.nativeBitmapInfo) else { return nil }
             ctx.translateBy(x: -pixels.minX, y: pixels.maxY)
             ctx.scaleBy(x: scale.width, y: -scale.height)
             ctx.setAllowsAntialiasing(true)
@@ -774,6 +779,7 @@ enum CatRenderer {
         let showLegends: Bool
         let flipped: Bool
         let scale: CGSize
+        let colorSpace: CGColorSpace
     }
 
     private struct KeyboardArtwork {
@@ -813,7 +819,8 @@ enum CatRenderer {
         func rasterScale(_ value: CGFloat) -> CGFloat { min(4, max(1, (value * 4).rounded(.up) / 4)) }
         let scale = CGSize(width: rasterScale(hypot(transform.a, transform.b)),
                            height: rasterScale(hypot(transform.c, transform.d)))
-        let style = KeyboardStyle(theme: theme, showLegends: showLegends, flipped: flipped, scale: scale)
+        let style = KeyboardStyle(theme: theme, showLegends: showLegends, flipped: flipped, scale: scale,
+                                  colorSpace: ctx.colorSpace ?? CGColorSpaceCreateDeviceRGB())
         if keyboardArtwork?.style != style {
             keyboardArtwork = makeKeyboardArtwork(style: style)
         }
@@ -898,7 +905,7 @@ enum CatRenderer {
         let topChassis = roundedQuadPath(tl: tl, tr: tr, br: br, bl: bl, radius: 5.0)
         let bounds = shadowPath.boundingBoxOfPath.union(lowerChassis.boundingBoxOfPath)
             .union(topChassis.boundingBoxOfPath).insetBy(dx: -2, dy: -2)
-        let chassis = KeyboardBitmap(bounds: bounds, scale: style.scale) { ctx in
+        let chassis = KeyboardBitmap(bounds: bounds, scale: style.scale, colorSpace: style.colorSpace) { ctx in
             ctx.setFillColor(NSColor(calibratedWhite: 0, alpha: 0.22).cgColor)
             ctx.addPath(shadowPath)
             ctx.fillPath()
@@ -963,7 +970,7 @@ enum CatRenderer {
                     var transform = CGAffineTransform(translationX: labelCenter.x, y: labelCenter.y).rotated(by: .pi + 0.052)
                     if style.flipped { transform = transform.scaledBy(x: -1, y: 1) }
                     legendBitmap = KeyboardBitmap(bounds: textRect.applying(transform).insetBy(dx: -2, dy: -2),
-                                                  scale: style.scale) { ctx in
+                                                  scale: style.scale, colorSpace: style.colorSpace) { ctx in
                         ctx.concatenate(transform)
                         NSGraphicsContext.saveGraphicsState()
                         NSGraphicsContext.current = NSGraphicsContext(cgContext: ctx, flipped: true)
@@ -973,7 +980,7 @@ enum CatRenderer {
                 }
             }
             let restingBounds = legendBitmap.map { keyBounds.union($0.bounds) } ?? keyBounds
-            let resting = KeyboardBitmap(bounds: restingBounds, scale: style.scale) { ctx in
+            let resting = KeyboardBitmap(bounds: restingBounds, scale: style.scale, colorSpace: style.colorSpace) { ctx in
                 drawKeycap(in: ctx, path: kPath, fill: fill.cgColor, border: border)
                 legendBitmap?.draw(in: ctx)
             }
@@ -981,7 +988,7 @@ enum CatRenderer {
                                       legend: legendBitmap, resting: resting)
         }
 
-        let idle = KeyboardBitmap(bounds: bounds, scale: style.scale) { ctx in
+        let idle = KeyboardBitmap(bounds: bounds, scale: style.scale, colorSpace: style.colorSpace) { ctx in
             chassis?.draw(in: ctx)
             for key in keys {
                 drawKeyboardKey(key, in: ctx, glow: 0, glowColor: accentColor)
@@ -2766,15 +2773,24 @@ enum CatRenderer {
     }
 
     private static func blendColor(_ a: NSColor, _ b: NSColor, t: CGFloat) -> NSColor {
-        let ca = a.usingColorSpace(.deviceRGB) ?? a
-        let cb = b.usingColorSpace(.deviceRGB) ?? b
+        let ca = rgbaComponents(a)
+        let cb = rgbaComponents(b)
         let clamped = max(0, min(1, t))
         return NSColor(
-            calibratedRed: ca.redComponent + (cb.redComponent - ca.redComponent) * clamped,
-            green: ca.greenComponent + (cb.greenComponent - ca.greenComponent) * clamped,
-            blue: ca.blueComponent + (cb.blueComponent - ca.blueComponent) * clamped,
-            alpha: ca.alphaComponent + (cb.alphaComponent - ca.alphaComponent) * clamped
+            calibratedRed: ca.r + (cb.r - ca.r) * clamped,
+            green: ca.g + (cb.g - ca.g) * clamped,
+            blue: ca.b + (cb.b - ca.b) * clamped,
+            alpha: ca.a + (cb.a - ca.a) * clamped
         )
+    }
+
+    /// Reads RGBA straight off RGB-model colours (all the theme colours are); only other models
+    /// pay for a colour-space conversion. This runs per glowing key per frame.
+    private static func rgbaComponents(_ color: NSColor) -> (r: CGFloat, g: CGFloat, b: CGFloat, a: CGFloat) {
+        let rgb = color.colorSpace.colorSpaceModel == .rgb ? color : (color.usingColorSpace(.deviceRGB) ?? color)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        rgb.getRed(&r, green: &g, blue: &b, alpha: &a)
+        return (r, g, b, a)
     }
 
     private static func drawRadialGlow(in ctx: CGContext, center: CGPoint, radius: CGFloat, color: NSColor) {
