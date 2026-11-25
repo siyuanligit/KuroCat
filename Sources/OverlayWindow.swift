@@ -173,7 +173,7 @@ final class CatCanvasView: NSView {
         return CGPoint(x: localX, y: localY)
     }
 
-    /// Called on every 60fps tick to handle smart click-through AND petting strokes.
+    /// Called on every render tick (15-45 Hz) to handle smart click-through AND petting strokes.
     func updateHoverAndClickThrough() {
         guard let win = window else { return }
         let screenPt = NSEvent.mouseLocation
@@ -1211,6 +1211,7 @@ final class SettingsWindowController: NSWindowController {
         case .siamese: return "Siamese Cat"
         case .shorthair: return "Silver Tabby Shorthair"
         case .orangeWhite: return "Orange & White Cat"
+        case .britishShorthair: return "British Shorthair (Gray)"
         }
     }
 
@@ -1219,6 +1220,7 @@ final class SettingsWindowController: NSWindowController {
         case .classicMilk: return "Classic Milk White"
         case .midnightHacker: return "Midnight Hacker Black"
         case .retroCream: return "Retro Cream Gray"
+        case .graphite: return "Graphite Gray"
         }
     }
 
@@ -1247,6 +1249,7 @@ final class SettingsWindowController: NSWindowController {
             case .siamese: CatSettings.shared.eyeTheme = .siameseBlue
             case .shorthair: CatSettings.shared.eyeTheme = .softAmber
             case .orangeWhite: CatSettings.shared.eyeTheme = .referenceHazel
+            case .britishShorthair: CatSettings.shared.eyeTheme = .warmAmber
             }
             if let eIdx = EyeColorTheme.allCases.firstIndex(of: CatSettings.shared.eyeTheme) {
                 eyePopup.selectItem(at: eIdx)

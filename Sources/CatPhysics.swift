@@ -8,6 +8,7 @@ enum KeyboardTheme: String, CaseIterable {
     case classicMilk = "经典奶白暖黄 (原版)"
     case midnightHacker = "暗夜极客黑"
     case retroCream = "复古奶油灰"
+    case graphite = "深灰素色"
 }
 
 enum CatCoatTheme: String, CaseIterable {
@@ -15,6 +16,7 @@ enum CatCoatTheme: String, CaseIterable {
     case siamese = "挖煤暹罗猫"
     case shorthair = "美短（银虎斑加白）"
     case orangeWhite = "橘白猫"
+    case britishShorthair = "英短蓝猫（灰毛橘黄瞳）"
 }
 
 enum EyeColorTheme: String, CaseIterable {
@@ -171,10 +173,11 @@ final class CatSettings {
         fullScreenOverlay = d.object(forKey: "KuroCat.FullScreenOverlay") as? Bool ?? true
         let savedScale = d.double(forKey: "KuroCat.Scale")
         scale = savedScale > 0.3 ? CGFloat(savedScale) : 1.0
-        coatTheme = CatCoatTheme(rawValue: d.string(forKey: "KuroCat.CoatTheme") ?? "") ?? .classicBlack
-        keyboardTheme = KeyboardTheme(rawValue: d.string(forKey: "KuroCat.KeyboardTheme") ?? "") ?? .classicMilk
+        coatTheme = CatCoatTheme(rawValue: d.string(forKey: "KuroCat.CoatTheme") ?? "") ?? .britishShorthair
+        keyboardTheme = KeyboardTheme(rawValue: d.string(forKey: "KuroCat.KeyboardTheme") ?? "") ?? .graphite
         let savedEye = d.string(forKey: "KuroCat.EyeTheme") ?? ""
-        eyeTheme = EyeColorTheme.saved(savedEye)
+        // Fresh installs (no saved coat) get the British Shorthair's paired warm-amber eyes.
+        eyeTheme = savedEye.isEmpty && d.string(forKey: "KuroCat.CoatTheme") == nil ? .warmAmber : EyeColorTheme.saved(savedEye)
         customSkin = d.string(forKey: "KuroCat.CustomSkin") ?? ""
         customKeyboard = d.string(forKey: "KuroCat.CustomKeyboard") ?? ""
     }
@@ -1447,8 +1450,15 @@ struct SkinSpec {
         o.palette.whiskers = .hex(0x8D8170, 0.68); o.palette.crease = .hex(0x8B8171, 0.60)
         o.headSurface = .dome; o.shape.pawStagger = 0
         o.marks = CoatPatterns.orangeWhite.map(SkinSpec.skinMark) + tailRings(0xA57543)
-        k.idleLegsTinted = false; s.idleLegsTinted = false; h.idleLegsTinted = false; o.idleLegsTinted = false
-        return [.classicBlack: k, .siamese: s, .shorthair: h, .orangeWhite: o]
+        // Solid British Blue (dark gray, no markings); eyes come from the eye-colour menu (paired: 琥珀金瞳).
+        var b = SkinSpec(id: "builtin:4", name: "英短蓝猫（灰毛橘黄瞳）", builtIn: true)
+        let slate = SkinColor.hex(0x3A3F47)
+        b.palette.body = slate; b.palette.legs = slate; b.palette.paws = slate; b.palette.earOuter = slate; b.palette.tail = slate
+        b.palette.earInner = .hex(0xB9A4A4); b.palette.nose = .hex(0x9C7F82)
+        b.palette.whiskers = .hex(0xD8DCE0, 0.68); b.palette.crease = .hex(0x181B20, 0.75)
+        b.headSurface = .dome; b.shape.pawStagger = 0
+        k.idleLegsTinted = false; s.idleLegsTinted = false; h.idleLegsTinted = false; o.idleLegsTinted = false; b.idleLegsTinted = false
+        return [.classicBlack: k, .siamese: s, .shorthair: h, .orangeWhite: o, .britishShorthair: b]
     }()
 
     private static func skinMark(_ m: CoatMark) -> SkinMark {
@@ -1846,6 +1856,19 @@ struct KeyboardSkinSpec: Equatable {
                 keyBorder: .rgba(0.68, 0.65, 0.60, 0.85),
                 accent: .rgba(0.88, 0.42, 0.24),
                 darkText: true
+            )
+        case .graphite:
+            return KeyboardSkinSpec(
+                id: "builtin:3", name: theme.rawValue, author: "KuroCat", builtIn: true,
+                mouseBody: .rgba(0.27, 0.28, 0.30),
+                mouseBorder: .rgba(0.10, 0.10, 0.11),
+                wheel: .rgba(0.40, 0.41, 0.43),
+                base: .rgba(0.09, 0.09, 0.10),
+                deck: .rgba(0.14, 0.14, 0.15),
+                key: .rgba(0.27, 0.28, 0.30),
+                keyBorder: .rgba(0.15, 0.15, 0.16, 0.95),
+                accent: .rgba(0.27, 0.28, 0.30),   // no accent keys: every key is the same grey
+                darkText: false
             )
         }
     }

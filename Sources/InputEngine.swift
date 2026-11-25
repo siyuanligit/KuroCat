@@ -207,7 +207,7 @@ final class InputEngine {
         }
     }
 
-    /// Called at 60fps from the render loop to sample global cursor motion (requires zero permissions).
+    /// Called once per render tick (15-45 Hz, see AppDelegate.renderTick) to sample global cursor motion (requires zero permissions).
     func pollMouse(dt: CGFloat) {
         let loc = NSEvent.mouseLocation
         let dx = loc.x - lastMouseLocation.x
@@ -420,6 +420,16 @@ final class InputEngine {
         ]
 
         IOHIDManagerSetDeviceMatchingMultiple(manager, matches as CFArray)
+
+        // handleHIDValue only reads keys, mouse buttons and the Apple Fn key. Without this filter every
+        // pointer X/Y/wheel report (hundreds per second while the mouse moves) wakes the main thread
+        // just to be discarded; cursor motion is sampled by pollMouse() instead.
+        let valueMatches: [[String: Any]] = [
+            [kIOHIDElementUsagePageKey as String: kHIDPage_KeyboardOrKeypad],
+            [kIOHIDElementUsagePageKey as String: kHIDPage_Button],
+            [kIOHIDElementUsagePageKey as String: 0xFF, kIOHIDElementUsageKey as String: 0x03]
+        ]
+        IOHIDManagerSetInputValueMatchingMultiple(manager, valueMatches as CFArray)
 
         let context = Unmanaged.passUnretained(self).toOpaque()
         IOHIDManagerRegisterInputValueCallback(manager, { ctx, _, _, value in

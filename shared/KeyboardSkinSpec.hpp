@@ -39,6 +39,18 @@ struct KeyboardSkinSpec {
             s.keyBorder   = SkinColor::rgba(0.11f, 0.11f, 0.13f, 0.95f);
             s.accent      = SkinColor::rgba(0.77f, 0.94f, 0.25f);
             s.darkText    = false;
+        } else if (themeIdx == 3) {
+            s.id = "builtin:3";
+            s.name = "深灰素色";
+            s.mouseBody   = SkinColor::rgba(0.27f, 0.28f, 0.30f);
+            s.mouseBorder = SkinColor::rgba(0.10f, 0.10f, 0.11f);
+            s.wheel       = SkinColor::rgba(0.40f, 0.41f, 0.43f);
+            s.base        = SkinColor::rgba(0.09f, 0.09f, 0.10f);
+            s.deck        = SkinColor::rgba(0.14f, 0.14f, 0.15f);
+            s.key         = SkinColor::rgba(0.27f, 0.28f, 0.30f);
+            s.keyBorder   = SkinColor::rgba(0.15f, 0.15f, 0.16f, 0.95f);
+            s.accent      = SkinColor::rgba(0.27f, 0.28f, 0.30f);  // no accent keys: every key is the same grey
+            s.darkText    = false;
         } else if (themeIdx == 2) {
             s.id = "builtin:2";
             s.name = "复古奶油灰";

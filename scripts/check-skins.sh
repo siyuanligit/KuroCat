@@ -19,6 +19,8 @@ for name,source in sources:
  source=source.replace('enum CatRenderer {','enum '+name+' {').replace('CatSettings.shared','RenderSettings.shared')
  source=source.replace('private static func coatMarkPoint','static func coatMarkPoint').replace('private static func projectHead3D','static func projectHead3D')
  if name!='CurrentRenderer':source=source.replace('CatHitZone',name+'CatHitZone')
+ # The pinned baseline predates KeyboardTheme.graphite; it never renders it, so just make its switches exhaustive.
+ if name!='CurrentRenderer':source=source.replace('case .retroCream:','case .graphite, .retroCream:')
  (out/(name+'.swift')).write_text(source)
 PY
 swiftc -module-cache-path "$CHECK_DIR/cache" \

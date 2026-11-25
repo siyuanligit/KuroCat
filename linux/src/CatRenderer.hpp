@@ -36,7 +36,7 @@ inline const SkinSpec& builtInSkin(CatCoatTheme coat) {
             }
             return rings;
         };
-        std::vector<SkinSpec> v(4);
+        std::vector<SkinSpec> v(5);
         SkinSpec& k = v[0];
         k.id = "builtin:0"; k.name = "经典小黑猫"; k.builtIn = true;
         k.palette.body = k.palette.legs = k.palette.paws = k.palette.earOuter = k.palette.tail = black;
@@ -76,10 +76,17 @@ inline const SkinSpec& builtInSkin(CatCoatTheme coat) {
         o.headSurface = SkinHeadSurface::Dome; o.shape.pawStagger = 0;
         o.marks = skinMarksFromCoat(orangeWhiteMarks());
         for (auto& m : tailRings(0xA57543)) o.marks.push_back(m);
+        // Solid British Blue (dark gray, no markings); eyes come from the eye-colour menu (paired: warm amber).
+        SkinSpec& g = v[4];
+        g.id = "builtin:4"; g.name = "英短蓝猫（灰毛橘黄瞳）"; g.builtIn = true;
+        g.palette.body = g.palette.legs = g.palette.paws = g.palette.earOuter = g.palette.tail = SkinColor::hex(0x3A3F47);
+        g.palette.earInner = SkinColor::hex(0xB9A4A4); g.palette.nose = SkinColor::hex(0x9C7F82);
+        g.palette.whiskers = SkinColor::hex(0xD8DCE0, 0.68); g.palette.crease = SkinColor::hex(0x181B20, 0.75);
+        g.headSurface = SkinHeadSurface::Dome; g.shape.pawStagger = 0;
         for (SkinSpec& b : v) b.idleLegsTinted = false;
         return v;
     }();
-    int i = std::clamp((int)coat, 0, 3);
+    int i = std::clamp((int)coat, 0, 4);
     return skins[(size_t)i];
 }
 
@@ -715,6 +722,7 @@ private:
         RGBA bodyCol   = { kbSkin.mouseBody.r, kbSkin.mouseBody.g, kbSkin.mouseBody.b, kbSkin.mouseBody.a };
         RGBA borderCol = { kbSkin.mouseBorder.r, kbSkin.mouseBorder.g, kbSkin.mouseBorder.b, kbSkin.mouseBorder.a };
         RGBA wheelCol  = { kbSkin.wheel.r, kbSkin.wheel.g, kbSkin.wheel.b, kbSkin.wheel.a };
+        const bool graphite = kbSkin.builtIn && kbSkin.id == "builtin:3";  // click flash: neutral white on graphite
 
         cairo_new_path(cr);
         fillEllipse(cr, 0, 0, 13.5, 16.5);
@@ -725,12 +733,14 @@ private:
             cairo_save(cr);
             cairo_clip(cr);
             if (physics.mousePressLeft.value > 0.05f) {
-                cairo_set_source_rgba(cr, 0.79, 0.95, 0.25, 0.38 * physics.mousePressLeft.value);
+                if (graphite) cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 0.38 * physics.mousePressLeft.value);
+                else cairo_set_source_rgba(cr, 0.79, 0.95, 0.25, 0.38 * physics.mousePressLeft.value);
                 cairo_rectangle(cr, 0, 0, 14, 17);
                 cairo_fill(cr);
             }
             if (physics.mousePressRight.value > 0.05f) {
-                cairo_set_source_rgba(cr, 0.79, 0.95, 0.25, 0.38 * physics.mousePressRight.value);
+                if (graphite) cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 0.38 * physics.mousePressRight.value);
+                else cairo_set_source_rgba(cr, 0.79, 0.95, 0.25, 0.38 * physics.mousePressRight.value);
                 cairo_rectangle(cr, -14, 0, 14, 17);
                 cairo_fill(cr);
             }
@@ -771,7 +781,10 @@ private:
         constexpr float depth = 3.6f;
 
         RGBA baseCol, bodyCol, padCol, keyCol, accentCol;
-        if (theme == KeyboardTheme::MidnightHacker) {
+        if (theme == KeyboardTheme::Graphite) {
+            baseCol = {0.08,0.08,0.09,1}; bodyCol = {0.17,0.17,0.18,1};
+            padCol = {0.22,0.22,0.24,1}; keyCol = {0.27,0.28,0.30,1}; accentCol = keyCol;
+        } else if (theme == KeyboardTheme::MidnightHacker) {
             baseCol = {0.05,0.05,0.07,1}; bodyCol = {0.11,0.12,0.15,1};
             padCol = {0.16,0.17,0.21,1}; keyCol = {0.24,0.25,0.30,1}; accentCol = {0.78,0.95,0.25,1};
         } else if (theme == KeyboardTheme::RetroCream) {
@@ -884,7 +897,9 @@ private:
 
     static void drawStylusBody(cairo_t* cr, double len, KeyboardTheme theme, EyeColorTheme eyeTheme, float pressed) {
         RGBA barrelCol, gripCol, ringCol;
-        if (theme == KeyboardTheme::MidnightHacker) {
+        if (theme == KeyboardTheme::Graphite) {
+            barrelCol = {0.18,0.18,0.20,1}; gripCol = {0.27,0.28,0.30,1}; ringCol = {0.40,0.41,0.43,1};
+        } else if (theme == KeyboardTheme::MidnightHacker) {
             barrelCol = {0.13,0.14,0.17,1}; gripCol = {0.22,0.24,0.29,1}; ringCol = {0.78,0.95,0.25,1};
         } else if (theme == KeyboardTheme::RetroCream) {
             barrelCol = {0.28,0.26,0.24,1}; gripCol = {0.42,0.39,0.35,1}; ringCol = {0.88,0.42,0.24,1};
@@ -1692,28 +1707,35 @@ private:
         if (physics.yawnAmount > 0.03f) drawYawnMouth(cr, yawRad, pitchRad, physics.yawnAmount, skin);
         drawWhiskers3D(cr, yawRad, pitchRad, physics, skin);
 
-        // Pulsing red anime anger vein (💢) when typing super fast
+        // Sweat drop (💦) sliding down the head when typing super fast
         float anger = std::clamp(physics.angerIntensity.value, 0.0f, 1.0f);
         if (anger > 0.12f) {
-            double pulse = 1.0 + std::sin(physics.time * 14.0f) * 0.12;
+            double phase = std::fmod((double)physics.time * 0.9, 1.0);
+            double fade = std::min(1.0, (1.0 - phase) / 0.3);
+            double a = anger * fade;
             double ax = 22.0 + yawRad * 8.0;
-            double ay = -23.0 + pitchRad * 4.0;
+            double ay = -23.0 + pitchRad * 4.0 + phase * 6.0;
             cairo_save(cr);
             cairo_translate(cr, ax, ay);
-            cairo_scale(cr, pulse, pulse);
-            cairo_set_source_rgba(cr, 0.94, 0.22, 0.22, 0.92 * anger);
-            cairo_set_line_width(cr, 2.2);
-            cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
-            cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
-            const double dirs[4][2] = { {-1,-1}, {1,-1}, {-1,1}, {1,1} };
-            for (int d = 0; d < 4; ++d) {
-                double sx = dirs[d][0], sy = dirs[d][1];
-                cairo_new_path(cr);
-                cairo_move_to(cr, sx * 2.0, sy * 6.0);
-                cairo_line_to(cr, sx * 2.0, sy * 2.0);
-                cairo_line_to(cr, sx * 6.0, sy * 2.0);
-                cairo_stroke(cr);
-            }
+            cairo_new_path(cr);
+            cairo_move_to(cr, 0.0, -6.5);
+            cairo_curve_to(cr, 0.8, -3.5, 3.6, -1.0, 3.6, 2.0);
+            cairo_curve_to(cr, 3.6, 5.8, -3.6, 5.8, -3.6, 2.0);
+            cairo_curve_to(cr, -3.6, -1.0, -0.8, -3.5, 0.0, -6.5);
+            cairo_close_path(cr);
+            cairo_set_source_rgba(cr, 0.52, 0.80, 1.0, 0.92 * a);
+            cairo_fill_preserve(cr);
+            cairo_set_source_rgba(cr, 0.24, 0.54, 0.88, 0.95 * a);
+            cairo_set_line_width(cr, 1.2);
+            cairo_stroke(cr);
+            cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 0.85 * a);
+            cairo_new_path(cr);
+            cairo_save(cr);
+            cairo_translate(cr, -1.4, 1.3);
+            cairo_scale(cr, 0.8, 1.3);
+            cairo_arc(cr, 0.0, 0.0, 1.0, 0.0, 2.0 * M_PI);
+            cairo_restore(cr);
+            cairo_fill(cr);
             cairo_restore(cr);
         }
 

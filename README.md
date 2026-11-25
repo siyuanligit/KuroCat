@@ -35,7 +35,7 @@
   - **摸头/摸背互动**：鼠标轻撸猫头会露出惬意闭眼 `— —` 与微光粒子，闲置久了还会打瞌睡冒 `z`。
   - **智能鼠标穿透、开机自启 & 自动更新检测**：透明区域自动穿透不挡操作；玩竞技游戏时可一键开启「完全鼠标穿透（游戏防误触）」，支持一键勾选「开机自动启动」（Windows 注册表 / macOS LaunchAgent / Linux XDG Autostart），启动时自动检测新版本并在菜单栏/托盘提示更新。
 - **🎨 猫咪皮肤 & 多配色自由搭配**
-  - **猫咪皮肤**：经典小黑猫（原版荧光黄绿瞳）/ 挖煤暹罗猫（暖燕麦奶白 + 2.5D 焦糖面罩 + 巧克力小袜子 + 宝石蓝瞳）/ 美短（银虎斑加白 + 平顶白色额纹）/ 橘白猫（橘色头顶 + 白胸与白手套） / 狸花猫（Windows）
+  - **猫咪皮肤**：经典小黑猫（原版荧光黄绿瞳）/ 挖煤暹罗猫（暖燕麦奶白 + 2.5D 焦糖面罩 + 巧克力小袜子 + 宝石蓝瞳）/ 美短（银虎斑加白 + 平顶白色额纹）/ 橘白猫（橘色头顶 + 白胸与白手套） / 英短蓝猫（深灰毛 + 琥珀金瞳，**新装默认**） / 狸花猫（Windows）
   - **键盘配色**：经典奶白暖黄 / 暗夜极客黑 / 复古奶油灰（支持开关键盘字符、按键气泡与鼠标点击气泡）
   - **瞳色与缩放**：6 种瞳色（Windows 另有橄榄金）、5 档尺寸缩放、今日击键与实时 KPM 统计。
 
@@ -135,9 +135,15 @@ KuroCat/
 ├── build.sh                   # macOS 一键通用二进制编译脚本
 ├── windows/                   # Windows 原生 C++17 (Win32 + GDI+ + Raw Input)
 ├── linux/                     # Linux & 统信 UOS 原生 C++17 (GTK3 + Cairo + XInput2 + evdev)
-│   ├── src/                   # KeyMap / InputEngine / CatPhysics / CatRenderer / main.cpp
+│   ├── src/                   # KeyMap / InputEngine / CatPhysics / CatRenderer / SkinLibrary / main.cpp
 │   ├── build.sh               # 本地编译脚本
 │   └── build_deb.sh           # 一键打包 Debian / 统信 UOS .deb 安装包
+├── shared/                    # Windows / Linux 共用：SkinSpec.hpp (.kurocat 解析) 与 CoatPatterns.hpp
+├── skins/                     # 内置毛色 .kurocat 皮肤与示例
+├── docs/                      # 皮肤格式规范 (skin-format.md) 与截图
+├── scripts/                   # 皮肤 / 闭眼检查、毛色花纹生成、macOS 签名证书脚本
+├── tests/                     # 皮肤格式解析、皮肤渲染、闭眼等测试
+├── assets/                    # README 演示 GIF 与预览图
 └── .github/workflows/build.yml # macOS + Windows + Linux (x86_64 & arm64) 全平台自动发版
 ```
 

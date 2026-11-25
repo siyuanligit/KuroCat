@@ -115,6 +115,8 @@ enum MenuCmd : UINT {
     CMD_TOGGLE_RUN_AS_ADMIN,
     CMD_QUIT,
     CMD_COAT_TABBY,
+    CMD_COAT_BRITISH,
+    CMD_KB_GRAPHITE,
     CMD_EYE_OLIVE_GOLD,
     CMD_TABLET_AUTO,
     CMD_TABLET_ON,
@@ -968,12 +970,13 @@ const SkinSpec& activeSkin(const AppState& app) {
 }
 
 const KeyboardSkinSpec& builtInKeyboardSkin(KeyboardTheme theme) {
-    static const KeyboardSkinSpec themes[3] = {
+    static const KeyboardSkinSpec themes[4] = {
         KeyboardSkinSpec::builtInTheme(0),
         KeyboardSkinSpec::builtInTheme(1),
-        KeyboardSkinSpec::builtInTheme(2)
+        KeyboardSkinSpec::builtInTheme(2),
+        KeyboardSkinSpec::builtInTheme(3)
     };
-    int i = std::clamp((int)theme, 0, 2);
+    int i = std::clamp((int)theme, 0, 3);
     return themes[i];
 }
 
@@ -1452,24 +1455,25 @@ void rebuildCombosAndSync(AppState& app) {
     bool en = app.settings.isEnglish;
     auto tr = [&](const wchar_t* zh, const wchar_t* eng) -> const wchar_t* { return en ? eng : zh; };
 
-    // Coat / Skin combo (6 built-in + imported)
+    // Coat / Skin combo (7 built-in + imported)
     HWND coatCb = GetDlgItem(hwnd, ID_COAT_COMBO);
     if (coatCb) {
         SendMessageW(coatCb, CB_RESETCONTENT, 0, 0);
-        const wchar_t* builtins[6] = {
+        const wchar_t* builtins[7] = {
             tr(L"\u7ECF\u5178\u5C0F\u9ED1\u732B", L"Classic Black Cat"),
             tr(L"\u6316\u7164\u66B9\u7F57\u732B", L"Siamese Cat"),
             tr(L"\u7F8E\u77ED\u94F6\u864E\u6591", L"Silver Tabby Shorthair"),
             tr(L"\u6A58\u767D\u732B", L"Orange & White Cat"),
             tr(L"\u5446\u732B", L"Dazed Cat"),
-            tr(L"\u72F8\u82B1\u732B", L"Tabby Cat")
+            tr(L"\u72F8\u82B1\u732B", L"Tabby Cat"),
+            tr(L"\u82F1\u77ED\u84DD\u732B\uFF08\u7070\u6BDB\u6A58\u9EC4\u77B3\uFF09", L"British Shorthair (Gray)")
         };
-        for (int i = 0; i < 6; ++i) SendMessageW(coatCb, CB_ADDSTRING, 0, (LPARAM)builtins[i]);
+        for (int i = 0; i < 7; ++i) SendMessageW(coatCb, CB_ADDSTRING, 0, (LPARAM)builtins[i]);
         int sel = (int)app.settings.coatTheme;
         for (size_t i = 0; i < app.skins.skins.size(); ++i) {
             SendMessageW(coatCb, CB_ADDSTRING, 0, (LPARAM)utf8ToWide(app.skins.skins[i].name).c_str());
             if (!app.settings.customSkin.empty() && app.skins.skins[i].id == app.settings.customSkin) {
-                sel = 6 + (int)i;
+                sel = 7 + (int)i;
             }
         }
         SendMessageW(coatCb, CB_SETCURSEL, (WPARAM)sel, 0);
@@ -1492,22 +1496,23 @@ void rebuildCombosAndSync(AppState& app) {
         SendMessageW(eyeCb, CB_SETCURSEL, (WPARAM)(int)app.settings.eyeTheme, 0);
     }
 
-    // Keyboard combo (3 built-in + imported)
+    // Keyboard combo (4 built-in + imported)
     app.kbLibrary.reload();
     HWND kbCb = GetDlgItem(hwnd, ID_KB_COMBO);
     if (kbCb) {
         SendMessageW(kbCb, CB_RESETCONTENT, 0, 0);
-        const wchar_t* kbs[3] = {
+        const wchar_t* kbs[4] = {
             tr(L"\u7ECF\u5178\u5976\u767D\u6696\u9EC4", L"Classic Milk White"),
             tr(L"\u6697\u591C\u6781\u5BA2\u9ED1", L"Midnight Hacker Black"),
-            tr(L"\u590D\u53E4\u5976\u6CB9\u7070", L"Retro Cream Gray")
+            tr(L"\u590D\u53E4\u5976\u6CB9\u7070", L"Retro Cream Gray"),
+            tr(L"\u6DF1\u7070\u7D20\u8272", L"Graphite Gray")
         };
-        for (int i = 0; i < 3; ++i) SendMessageW(kbCb, CB_ADDSTRING, 0, (LPARAM)kbs[i]);
+        for (int i = 0; i < 4; ++i) SendMessageW(kbCb, CB_ADDSTRING, 0, (LPARAM)kbs[i]);
         int sel = (int)app.settings.keyboardTheme;
         for (size_t i = 0; i < app.kbLibrary.skins.size(); ++i) {
             SendMessageW(kbCb, CB_ADDSTRING, 0, (LPARAM)utf8ToWide(app.kbLibrary.skins[i].name).c_str());
             if (!app.settings.customKeyboard.empty() && app.kbLibrary.skins[i].id == app.settings.customKeyboard) {
-                sel = 3 + (int)i;
+                sel = 4 + (int)i;
             }
         }
         SendMessageW(kbCb, CB_SETCURSEL, (WPARAM)sel, 0);
@@ -1630,7 +1635,7 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
                 int sel = (int)SendMessageW((HWND)lParam, CB_GETCURSEL, 0, 0);
                 if (sel < 0) return 0;
                 if (id == ID_COAT_COMBO) {
-                    if (sel < 6) {
+                    if (sel < 7) {
                         app->settings.customSkin.clear();
                         app->settings.coatTheme = (CatCoatTheme)sel;
                         switch (app->settings.coatTheme) {
@@ -1640,9 +1645,10 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
                             case CatCoatTheme::OrangeWhite:  app->settings.eyeTheme = EyeColorTheme::WarmAmber; break;
                             case CatCoatTheme::Dazed:        app->settings.eyeTheme = EyeColorTheme::SoftAmber; break;
                             case CatCoatTheme::Tabby:        app->settings.eyeTheme = EyeColorTheme::OliveGold; break;
+                            case CatCoatTheme::BritishShorthair: app->settings.eyeTheme = EyeColorTheme::WarmAmber; break;
                         }
-                    } else if ((size_t)(sel - 6) < app->skins.skins.size()) {
-                        app->settings.customSkin = app->skins.skins[sel - 6].id;
+                    } else if ((size_t)(sel - 7) < app->skins.skins.size()) {
+                        app->settings.customSkin = app->skins.skins[sel - 7].id;
                     }
                     app->settings.saveToRegistry();
                     refreshDressingRoom(*app);
@@ -1650,11 +1656,11 @@ LRESULT CALLBACK settingsWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
                     app->settings.eyeTheme = (EyeColorTheme)sel;
                     app->settings.saveToRegistry();
                 } else if (id == ID_KB_COMBO) {
-                    if (sel < 3) {
+                    if (sel < 4) {
                         app->settings.customKeyboard.clear();
                         app->settings.keyboardTheme = (KeyboardTheme)sel;
-                    } else if ((size_t)(sel - 3) < app->kbLibrary.skins.size()) {
-                        app->settings.customKeyboard = app->kbLibrary.skins[sel - 3].id;
+                    } else if ((size_t)(sel - 4) < app->kbLibrary.skins.size()) {
+                        app->settings.customKeyboard = app->kbLibrary.skins[sel - 4].id;
                     }
                     app->settings.saveToRegistry();
                 } else if (id == ID_TABLET_COMBO && sel <= 2) {
@@ -1978,6 +1984,7 @@ void showContextMenu(AppState& app, POINT screenPt) {
     AppendMenuW(coatMenu, MF_STRING | coatCheck(CatCoatTheme::OrangeWhite), CMD_COAT_ORANGE_WHITE, tr(L"\u6A58\u767D\u732B", L"Orange & White Cat"));
     AppendMenuW(coatMenu, MF_STRING | coatCheck(CatCoatTheme::Dazed), CMD_COAT_DAZED, tr(L"\u5446\u732B", L"Dazed Cat"));
     AppendMenuW(coatMenu, MF_STRING | coatCheck(CatCoatTheme::Tabby), CMD_COAT_TABBY, tr(L"\u72F8\u82B1\u732B", L"Tabby Cat"));
+    AppendMenuW(coatMenu, MF_STRING | coatCheck(CatCoatTheme::BritishShorthair), CMD_COAT_BRITISH, tr(L"\u82F1\u77ED\u84DD\u732B\uFF08\u7070\u6BDB\u6A58\u9EC4\u77B3\uFF09", L"British Shorthair (Gray)"));
     size_t listed = std::min<size_t>(app.skins.skins.size(), CMD_SKIN_RANGE);
     if (listed) AppendMenuW(coatMenu, MF_SEPARATOR, 0, nullptr);
     for (size_t i = 0; i < listed; ++i) {
@@ -2167,6 +2174,12 @@ void showContextMenu(AppState& app, POINT screenPt) {
             app.settings.eyeTheme = cmd == CMD_COAT_SHORTHAIR ? EyeColorTheme::ReferenceHazel : EyeColorTheme::WarmAmber;
             app.settings.saveToRegistry();
             break;
+        case CMD_COAT_BRITISH:
+            app.settings.customSkin.clear();
+            app.settings.coatTheme = CatCoatTheme::BritishShorthair;
+            app.settings.eyeTheme = EyeColorTheme::WarmAmber;
+            app.settings.saveToRegistry();
+            break;
         case CMD_COAT_DAZED:
             app.settings.customSkin.clear();
             app.settings.coatTheme = CatCoatTheme::Dazed;
@@ -2189,6 +2202,11 @@ void showContextMenu(AppState& app, POINT screenPt) {
         case CMD_KB_RETRO:
             app.settings.customKeyboard.clear();
             app.settings.keyboardTheme = KeyboardTheme::RetroCream;
+            app.settings.saveToRegistry();
+            break;
+        case CMD_KB_GRAPHITE:
+            app.settings.customKeyboard.clear();
+            app.settings.keyboardTheme = KeyboardTheme::Graphite;
             app.settings.saveToRegistry();
             break;
         case CMD_EYE_LIME:  app.settings.eyeTheme = EyeColorTheme::NeonChartreuse; app.settings.saveToRegistry(); break;

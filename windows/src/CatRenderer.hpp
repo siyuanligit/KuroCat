@@ -36,7 +36,7 @@ inline const SkinSpec& builtInSkin(CatCoatTheme coat) {
             }
             return rings;
         };
-        std::vector<SkinSpec> v(6);
+        std::vector<SkinSpec> v(7);
         SkinSpec& k = v[0];
         k.id = "builtin:0"; k.name = "经典小黑猫"; k.builtIn = true;
         k.palette.body = k.palette.legs = k.palette.paws = k.palette.earOuter = k.palette.tail = black;
@@ -95,10 +95,17 @@ inline const SkinSpec& builtInSkin(CatCoatTheme coat) {
         t.palette.tail = c8(163, 143, 117);
         t.palette.whiskers = c8(104, 85, 65, 174); t.palette.crease = c8(104, 85, 65, 255);
 
+        // Solid British Blue (dark gray, no markings); eyes come from the eye-colour menu (paired: warm amber).
+        SkinSpec& g = v[6];
+        g.id = "builtin:6"; g.name = "英短蓝猫（灰毛橘黄瞳）"; g.builtIn = true;
+        g.palette.body = g.palette.legs = g.palette.paws = g.palette.earOuter = g.palette.tail = c8(0x3A, 0x3F, 0x47);
+        g.palette.earInner = c8(0xB9, 0xA4, 0xA4); g.palette.nose = c8(0x9C, 0x7F, 0x82);
+        g.palette.whiskers = c8(0xD8, 0xDC, 0xE0, 174); g.palette.crease = c8(0x18, 0x1B, 0x20, 192);
+        g.headSurface = SkinHeadSurface::Dome; g.shape.pawStagger = 0;
         for (SkinSpec& b : v) b.idleLegsTinted = false;
         return v;
     }();
-    int i = std::clamp((int)coat, 0, static_cast<int>(CatCoatTheme::Tabby));
+    int i = std::clamp((int)coat, 0, static_cast<int>(CatCoatTheme::BritishShorthair));
     return skins[(size_t)i];
 }
 
@@ -326,7 +333,7 @@ public:
             drawHindFoot(g, seatX, seatY, physics, skin);
         }
 
-        // 7. 2.5D Eyes & Whiskers (+ optional nose/mouth, yawn, angry vein)
+        // 7. 2.5D Eyes & Whiskers (+ optional nose/mouth, yawn, sweat drop)
         drawHeadFeatures(g, headCenter, physics, settings.eyeTheme, skin);
 
         // 7b. Skin stickers anchored to head / neck / tail tip
@@ -746,6 +753,7 @@ private:
         Color bodyCol = col(kbSkin.mouseBody);
         Color borderCol = col(kbSkin.mouseBorder);
         Color wheelCol = col(kbSkin.wheel);
+        const bool graphite = kbSkin.builtIn && kbSkin.id == "builtin:3";  // click flash: neutral white on graphite
 
         SolidBrush bodyBrush(bodyCol);
         g.FillEllipse(&bodyBrush, -13.5f, -16.5f, 27.0f, 33.0f);
@@ -756,11 +764,13 @@ private:
             GraphicsState cs = g.Save();
             g.SetClip(&clipPath);
             if (physics.mousePressLeft.value > 0.05f) {
-                SolidBrush hb(Color((BYTE)(96 * physics.mousePressLeft.value), 201, 242, 64));
+                SolidBrush hb(graphite ? Color((BYTE)(96 * physics.mousePressLeft.value), 255, 255, 255)
+                                                               : Color((BYTE)(96 * physics.mousePressLeft.value), 201, 242, 64));
                 g.FillRectangle(&hb, 0.0f, 0.0f, 14.0f, 17.0f);
             }
             if (physics.mousePressRight.value > 0.05f) {
-                SolidBrush hb(Color((BYTE)(96 * physics.mousePressRight.value), 201, 242, 64));
+                SolidBrush hb(graphite ? Color((BYTE)(96 * physics.mousePressRight.value), 255, 255, 255)
+                                                               : Color((BYTE)(96 * physics.mousePressRight.value), 201, 242, 64));
                 g.FillRectangle(&hb, -14.0f, 0.0f, 14.0f, 17.0f);
             }
             g.Restore(cs);
@@ -792,7 +802,10 @@ private:
         constexpr float depth = 3.6f;
 
         Color baseCol, bodyCol, padCol, keyCol, accentCol;
-        if (theme == KeyboardTheme::MidnightHacker) {
+        if (theme == KeyboardTheme::Graphite) {
+            baseCol = Color(255, 20, 20, 23); bodyCol = Color(255, 43, 43, 46);
+            padCol = Color(255, 56, 56, 61); keyCol = Color(255, 69, 71, 77); accentCol = keyCol;
+        } else if (theme == KeyboardTheme::MidnightHacker) {
             baseCol = Color(255, 13, 13, 18); bodyCol = Color(255, 28, 31, 38);
             padCol = Color(255, 41, 43, 54); keyCol = Color(255, 61, 64, 77); accentCol = Color(255, 199, 242, 64);
         } else if (theme == KeyboardTheme::RetroCream) {
@@ -914,7 +927,9 @@ private:
     static void drawStylusBody(Gdiplus::Graphics& g, float len, KeyboardTheme theme, EyeColorTheme eyeTheme, float pressed) {
         using namespace Gdiplus;
         Color barrelCol, gripCol, ringCol;
-        if (theme == KeyboardTheme::MidnightHacker) {
+        if (theme == KeyboardTheme::Graphite) {
+            barrelCol = Color(255, 46, 46, 51); gripCol = Color(255, 69, 71, 77); ringCol = Color(255, 102, 105, 110);
+        } else if (theme == KeyboardTheme::MidnightHacker) {
             barrelCol = Color(255, 33, 36, 43); gripCol = Color(255, 56, 61, 74); ringCol = Color(255, 199, 242, 64);
         } else if (theme == KeyboardTheme::RetroCream) {
             barrelCol = Color(255, 71, 66, 61); gripCol = Color(255, 107, 99, 89); ringCol = Color(255, 224, 107, 61);
@@ -1879,20 +1894,24 @@ private:
         float anger = std::clamp(physics.angerIntensity.value, 0.0f, 1.0f);
         if (anger > 0.25f) {
             float aAlpha = std::min(1.0f, (anger - 0.25f) / 0.35f);
-            float pulse = 1.0f + std::sin(physics.time * 14.0f) * 0.10f;
+            // Sweat drop slides down the head and fades out, then restarts
+            float phase = std::fmod(physics.time * 0.9f, 1.0f);
+            float fade = std::min(1.0f, (1.0f - phase) / 0.3f);
+            float a = aAlpha * fade;
             Pt pt = projectHead3D(28.0f, -22.0f, 24.0f, yawRad, pitchRad);
             GraphicsState as = g.Save();
-            g.TranslateTransform(pt.x, pt.y);
-            g.ScaleTransform(pulse, pulse);
-            Pen ap(Color((BYTE)(242 * aAlpha), 245, 56, 72), 2.0f);
-            ap.SetStartCap(LineCapRound); ap.SetEndCap(LineCapRound);
-            float d = 2.4f, r = 6.2f;
-            float dirs[4][2] = { {-1,-1}, {1,-1}, {-1,1}, {1,1} };
-            for (auto& dir : dirs) {
-                GraphicsPath vp;
-                addQuadBezier(vp, { dir[0]*r, dir[1]*d }, { dir[0]*d, dir[1]*d }, { dir[0]*d, dir[1]*r });
-                g.DrawPath(&ap, &vp);
-            }
+            g.TranslateTransform(pt.x, pt.y + phase * 6.0f);
+            GraphicsPath drop;
+            drop.AddBezier(0.0f, -6.5f, 0.8f, -3.5f, 3.6f, -1.0f, 3.6f, 2.0f);
+            drop.AddBezier(3.6f, 2.0f, 3.6f, 5.8f, -3.6f, 5.8f, -3.6f, 2.0f);
+            drop.AddBezier(-3.6f, 2.0f, -3.6f, -1.0f, -0.8f, -3.5f, 0.0f, -6.5f);
+            drop.CloseFigure();
+            SolidBrush dropFill(Color((BYTE)(235 * a), 133, 204, 255));
+            g.FillPath(&dropFill, &drop);
+            Pen dropEdge(Color((BYTE)(242 * a), 61, 138, 224), 1.2f);
+            g.DrawPath(&dropEdge, &drop);
+            SolidBrush shine(Color((BYTE)(217 * a), 255, 255, 255));
+            g.FillEllipse(&shine, -2.2f, 0.0f, 1.6f, 2.6f);
             g.Restore(as);
         }
         g.Restore(st);

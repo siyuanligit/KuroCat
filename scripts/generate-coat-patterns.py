@@ -130,6 +130,8 @@ PALETTES={
  'shorthair':('美短（银虎斑加白）',{'body':hexrgb(0xC2C5C1),'legs':hexrgb(MILK),'earOuter':hexrgb(0xC2C5C1),'tail':hexrgb(0xC2C5C1),
           'belly':hexrgb(MILK),'paws':hexrgb(MILK),'stripes':hexrgb(0x55595A),'whiskers':LIGHT_WHISKER,'crease':LIGHT_CREASE},
           {'build':'standard','pawStagger':0},'plane',0x55595A),
+ 'britishShorthair':('英短蓝猫（灰毛橘黄瞳）',{'body':'#3A3F47','legs':'#3A3F47','earOuter':'#3A3F47','tail':'#3A3F47','paws':'#3A3F47','earInner':'#B9A4A4','nose':'#9C7F82','iris':'#E8A21A','whiskers':'#D8DCE0AD','crease':'#181B20C0'},
+          {'build':'standard','pawStagger':0},'dome',None),
  'orangeWhite':('橘白猫',{'body':hexrgb(MILK),'legs':hexrgb(MILK),'earOuter':hexrgb(GINGER),'tail':hexrgb(GINGER),
           'belly':hexrgb(MILK),'paws':hexrgb(MILK),'stripes':hexrgb(0xA57543),'whiskers':LIGHT_WHISKER,'crease':LIGHT_CREASE},
           {'build':'standard','pawStagger':0},'dome',0xA57543),

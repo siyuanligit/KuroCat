@@ -535,6 +535,9 @@ enum CatRenderer {
         let bodyColor = kbSkin.mouseBody.ns
         let borderColor = kbSkin.mouseBorder.ns
         let wheelColor = kbSkin.wheel.ns
+        // Click flash: green on the colourful themes, neutral white on graphite.
+        let flashColor = kbSkin.id == "builtin:3" ? NSColor(calibratedWhite: 1.0, alpha: 0.38)
+                                                  : NSColor(calibratedRed: 0.79, green: 0.95, blue: 0.25, alpha: 0.38)
 
         // Mouse body (palm-rest dome toward cat at top, click buttons & scroll wheel away from cat at bottom!)
         ctx.setFillColor(bodyColor.cgColor)
@@ -545,7 +548,7 @@ enum CatRenderer {
             ctx.saveGState()
             ctx.addEllipse(in: bodyRect)
             ctx.clip()
-            ctx.setFillColor(NSColor(calibratedRed: 0.79, green: 0.95, blue: 0.25, alpha: 0.38 * physics.mousePressLeft.value).cgColor)
+            ctx.setFillColor(flashColor.withAlphaComponent(0.38 * physics.mousePressLeft.value).cgColor)
             ctx.fill(CGRect(x: 0, y: 0, width: 14, height: 17))
             ctx.restoreGState()
         }
@@ -553,7 +556,7 @@ enum CatRenderer {
             ctx.saveGState()
             ctx.addEllipse(in: bodyRect)
             ctx.clip()
-            ctx.setFillColor(NSColor(calibratedRed: 0.79, green: 0.95, blue: 0.25, alpha: 0.38 * physics.mousePressRight.value).cgColor)
+            ctx.setFillColor(flashColor.withAlphaComponent(0.38 * physics.mousePressRight.value).cgColor)
             ctx.fill(CGRect(x: -14, y: 0, width: 14, height: 17))
             ctx.restoreGState()
         }
@@ -613,6 +616,12 @@ enum CatRenderer {
             padColor  = NSColor(calibratedRed: 0.42, green: 0.39, blue: 0.35, alpha: 1.0)
             keyColor  = NSColor(calibratedRed: 0.54, green: 0.50, blue: 0.45, alpha: 1.0)
             accentColor = NSColor(calibratedRed: 0.88, green: 0.42, blue: 0.24, alpha: 1.0)
+        case .graphite:
+            baseColor = NSColor(calibratedRed: 0.08, green: 0.08, blue: 0.09, alpha: 1.0)
+            bodyColor = NSColor(calibratedRed: 0.17, green: 0.17, blue: 0.18, alpha: 1.0)
+            padColor  = NSColor(calibratedRed: 0.22, green: 0.22, blue: 0.24, alpha: 1.0)
+            keyColor  = NSColor(calibratedRed: 0.27, green: 0.28, blue: 0.30, alpha: 1.0)
+            accentColor = keyColor
         }
 
         // Ambient drop shadow beneath tablet
@@ -754,6 +763,10 @@ enum CatRenderer {
             barrelCol = NSColor(calibratedRed: 0.28, green: 0.26, blue: 0.24, alpha: 1.0)
             gripCol   = NSColor(calibratedRed: 0.42, green: 0.39, blue: 0.35, alpha: 1.0)
             ringCol   = NSColor(calibratedRed: 0.88, green: 0.42, blue: 0.24, alpha: 1.0)
+        case .graphite:
+            barrelCol = NSColor(calibratedRed: 0.18, green: 0.18, blue: 0.20, alpha: 1.0)
+            gripCol   = NSColor(calibratedRed: 0.27, green: 0.28, blue: 0.30, alpha: 1.0)
+            ringCol   = NSColor(calibratedRed: 0.40, green: 0.41, blue: 0.43, alpha: 1.0)
         }
 
         // Tapered pen silhouette (nib at x=0 -> tapered cone x=7 -> ergonomic barrel -> rounded eraser cap at x=length)
@@ -847,12 +860,17 @@ enum CatRenderer {
         let image: CGImage
         let bounds: CGRect
 
-        init?(bounds: CGRect, scale: CGSize, draw: (CGContext) -> Void) {
+        /// BGRA premultiplied, the layout window backing stores use. Matching it (and the destination's
+        /// colour space) lets Core Graphics blit the cached image without a per-frame pixel conversion.
+        private static let nativeBitmapInfo = CGImageAlphaInfo.premultipliedFirst.rawValue
+            | CGBitmapInfo.byteOrder32Little.rawValue
+
+        init?(bounds: CGRect, scale: CGSize, colorSpace: CGColorSpace, draw: (CGContext) -> Void) {
             let pixels = CGRect(x: bounds.minX * scale.width, y: bounds.minY * scale.height,
                                 width: bounds.width * scale.width, height: bounds.height * scale.height).integral
             guard let ctx = CGContext(data: nil, width: Int(pixels.width), height: Int(pixels.height),
-                                      bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
-                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+                                      bitsPerComponent: 8, bytesPerRow: 0, space: colorSpace,
+                                      bitmapInfo: Self.nativeBitmapInfo) else { return nil }
             ctx.translateBy(x: -pixels.minX, y: pixels.maxY)
             ctx.scaleBy(x: scale.width, y: -scale.height)
             ctx.setAllowsAntialiasing(true)
@@ -878,6 +896,7 @@ enum CatRenderer {
         let showLegends: Bool
         let flipped: Bool
         let scale: CGSize
+        let colorSpace: CGColorSpace
     }
 
     private struct KeyboardArtwork {
@@ -917,7 +936,8 @@ enum CatRenderer {
         func rasterScale(_ value: CGFloat) -> CGFloat { min(4, max(1, (value * 4).rounded(.up) / 4)) }
         let scale = CGSize(width: rasterScale(hypot(transform.a, transform.b)),
                            height: rasterScale(hypot(transform.c, transform.d)))
-        let style = KeyboardStyle(kbSkin: kbSkin, showLegends: showLegends, flipped: flipped, scale: scale)
+        let style = KeyboardStyle(kbSkin: kbSkin, showLegends: showLegends, flipped: flipped, scale: scale,
+                                  colorSpace: ctx.colorSpace ?? CGColorSpaceCreateDeviceRGB())
         if keyboardArtwork?.style != style {
             keyboardArtwork = makeKeyboardArtwork(style: style)
         }
@@ -982,7 +1002,7 @@ enum CatRenderer {
         let topChassis = roundedQuadPath(tl: tl, tr: tr, br: br, bl: bl, radius: 5.0)
         let bounds = shadowPath.boundingBoxOfPath.union(lowerChassis.boundingBoxOfPath)
             .union(topChassis.boundingBoxOfPath).insetBy(dx: -2, dy: -2)
-        let chassis = KeyboardBitmap(bounds: bounds, scale: style.scale) { ctx in
+        let chassis = KeyboardBitmap(bounds: bounds, scale: style.scale, colorSpace: style.colorSpace) { ctx in
             ctx.setFillColor(NSColor(calibratedWhite: 0, alpha: 0.22).cgColor)
             ctx.addPath(shadowPath)
             ctx.fillPath()
@@ -1051,7 +1071,7 @@ enum CatRenderer {
                     var transform = CGAffineTransform(translationX: labelCenter.x, y: labelCenter.y).rotated(by: .pi + 0.052)
                     if style.flipped { transform = transform.scaledBy(x: -1, y: 1) }
                     legendBitmap = KeyboardBitmap(bounds: textRect.applying(transform).insetBy(dx: -2, dy: -2),
-                                                  scale: style.scale) { ctx in
+                                                  scale: style.scale, colorSpace: style.colorSpace) { ctx in
                         ctx.concatenate(transform)
                         NSGraphicsContext.saveGraphicsState()
                         NSGraphicsContext.current = NSGraphicsContext(cgContext: ctx, flipped: true)
@@ -1061,7 +1081,7 @@ enum CatRenderer {
                 }
             }
             let restingBounds = legendBitmap.map { keyBounds.union($0.bounds) } ?? keyBounds
-            let resting = KeyboardBitmap(bounds: restingBounds, scale: style.scale) { ctx in
+            let resting = KeyboardBitmap(bounds: restingBounds, scale: style.scale, colorSpace: style.colorSpace) { ctx in
                 drawKeycap(in: ctx, path: kPath, fill: fill.cgColor, border: border)
                 legendBitmap?.draw(in: ctx)
             }
@@ -1069,7 +1089,7 @@ enum CatRenderer {
                                       legend: legendBitmap, resting: resting)
         }
 
-        let idle = KeyboardBitmap(bounds: bounds, scale: style.scale) { ctx in
+        let idle = KeyboardBitmap(bounds: bounds, scale: style.scale, colorSpace: style.colorSpace) { ctx in
             chassis?.draw(in: ctx)
             for key in keys {
                 drawKeyboardKey(key, in: ctx, glow: 0, glowColor: accentColor)
@@ -1818,25 +1838,31 @@ enum CatRenderer {
         // 2. 3D-Projected Whiskers (outer-side whiskers poke out past silhouette when turning!)
         drawWhiskers3D(in: ctx, yawRad: yawRad, pitchRad: pitchRad, physics: physics, skin: skin)
 
-        // 3. Expressive emotion badges: Anger vein (💢) & Dizzy orbiting stars (✦) & Scruff pinch!
+        // 3. Expressive emotion badges: Sweat drop (💦) & Dizzy orbiting stars (✦) & Scruff pinch!
         let anger = max(0, min(1, physics.angerIntensity.value))
         if anger > 0.25 {
             let aAlpha = min(1.0, (anger - 0.25) / 0.35)
-            let pulse = 1.0 + sin(physics.time * 14.0) * 0.10
+            // Drop slides down the head and fades out, then restarts
+            let phase = CGFloat((physics.time * 0.9).truncatingRemainder(dividingBy: 1.0))
+            let fade = min(1.0, (1.0 - phase) / 0.3)
             let pt = projectHead3D(x: 28.0, y: -22.0, z: 24.0, yawRad: yawRad, pitchRad: pitchRad).pt
             ctx.saveGState()
-            ctx.translateBy(x: pt.x, y: pt.y)
-            ctx.scaleBy(x: pulse, y: pulse)
-            ctx.setStrokeColor(NSColor(calibratedRed: 0.96, green: 0.22, blue: 0.28, alpha: 0.95 * aAlpha).cgColor)
-            ctx.setLineWidth(2.0)
-            ctx.setLineCap(.round)
-            // Classic 4-corner anime anger vein mark
-            let d: CGFloat = 2.4, r: CGFloat = 6.2
-            for (sx, sy): (CGFloat, CGFloat) in [(-1,-1), (1,-1), (-1,1), (1,1)] {
-                ctx.move(to: CGPoint(x: sx * r, y: sy * d))
-                ctx.addQuadCurve(to: CGPoint(x: sx * d, y: sy * r), control: CGPoint(x: sx * d, y: sy * d))
-            }
+            ctx.translateBy(x: pt.x, y: pt.y + phase * 6.0)
+            let drop = CGMutablePath()
+            drop.move(to: CGPoint(x: 0, y: -6.5))
+            drop.addCurve(to: CGPoint(x: 3.6, y: 2), control1: CGPoint(x: 0.8, y: -3.5), control2: CGPoint(x: 3.6, y: -1))
+            drop.addCurve(to: CGPoint(x: -3.6, y: 2), control1: CGPoint(x: 3.6, y: 5.8), control2: CGPoint(x: -3.6, y: 5.8))
+            drop.addCurve(to: CGPoint(x: 0, y: -6.5), control1: CGPoint(x: -3.6, y: -1), control2: CGPoint(x: -0.8, y: -3.5))
+            drop.closeSubpath()
+            ctx.setFillColor(NSColor(calibratedRed: 0.52, green: 0.80, blue: 1.0, alpha: 0.92 * aAlpha * fade).cgColor)
+            ctx.addPath(drop)
+            ctx.fillPath()
+            ctx.setStrokeColor(NSColor(calibratedRed: 0.24, green: 0.54, blue: 0.88, alpha: 0.95 * aAlpha * fade).cgColor)
+            ctx.setLineWidth(1.2)
+            ctx.addPath(drop)
             ctx.strokePath()
+            ctx.setFillColor(NSColor(calibratedWhite: 1.0, alpha: 0.85 * aAlpha * fade).cgColor)
+            ctx.fillEllipse(in: CGRect(x: -2.2, y: 0.0, width: 1.6, height: 2.6))
             ctx.restoreGState()
         }
 
@@ -2908,15 +2934,24 @@ enum CatRenderer {
     }
 
     private static func blendColor(_ a: NSColor, _ b: NSColor, t: CGFloat) -> NSColor {
-        let ca = a.usingColorSpace(.deviceRGB) ?? a
-        let cb = b.usingColorSpace(.deviceRGB) ?? b
+        let ca = rgbaComponents(a)
+        let cb = rgbaComponents(b)
         let clamped = max(0, min(1, t))
         return NSColor(
-            calibratedRed: ca.redComponent + (cb.redComponent - ca.redComponent) * clamped,
-            green: ca.greenComponent + (cb.greenComponent - ca.greenComponent) * clamped,
-            blue: ca.blueComponent + (cb.blueComponent - ca.blueComponent) * clamped,
-            alpha: ca.alphaComponent + (cb.alphaComponent - ca.alphaComponent) * clamped
+            calibratedRed: ca.r + (cb.r - ca.r) * clamped,
+            green: ca.g + (cb.g - ca.g) * clamped,
+            blue: ca.b + (cb.b - ca.b) * clamped,
+            alpha: ca.a + (cb.a - ca.a) * clamped
         )
+    }
+
+    /// Reads RGBA straight off RGB-model colours (all the theme colours are); only other models
+    /// pay for a colour-space conversion. This runs per glowing key per frame.
+    private static func rgbaComponents(_ color: NSColor) -> (r: CGFloat, g: CGFloat, b: CGFloat, a: CGFloat) {
+        let rgb = color.colorSpace.colorSpaceModel == .rgb ? color : (color.usingColorSpace(.deviceRGB) ?? color)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        rgb.getRed(&r, green: &g, blue: &b, alpha: &a)
+        return (r, g, b, a)
     }
 
     private static func drawRadialGlow(in ctx: CGContext, center: CGPoint, radius: CGFloat, color: NSColor) {

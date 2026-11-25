@@ -9,7 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var lastFrameTime: CFTimeInterval = CACurrentMediaTime()
     private var lastFullscreenCheckTime: CFTimeInterval = 0
     private var hiddenByFullscreen = false
-    private var ticksSinceLastRedraw = 0
+    private var lastRedrawTime: CFTimeInterval = 0
     private var lastDemoKeyTime: CFTimeInterval = 0
     private var isPetVisible = true
     private var availableUpdateVersion: String?
@@ -159,65 +159,82 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func startRenderLoop() {
         lastFrameTime = CACurrentMediaTime()
-        let timer = Timer(timeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
-            guard let self, self.isPetVisible else { return }
-            let now = CACurrentMediaTime()
-            let dt = CGFloat(now - self.lastFrameTime)
-            self.lastFrameTime = now
+        scheduleRenderTick(after: 1.0 / 30.0)
+    }
 
-            // Fullscreen auto-hide check (~2Hz)
-            if now - self.lastFullscreenCheckTime > 0.5 {
-                self.lastFullscreenCheckTime = now
-                let s = CatSettings.shared
-                let obsBg = (s.obsCaptureMode > 0 && s.obsHideDesktop)
-                if s.autoHideFullscreen && !obsBg {
-                    let fs = Self.isOtherAppFullscreen()
-                    if fs != self.hiddenByFullscreen {
-                        self.hiddenByFullscreen = fs
-                        self.overlayWindow.alphaValue = fs ? 0.0 : 1.0
-                        if fs { self.overlayWindow.ignoresMouseEvents = true }
-                    }
-                } else if self.hiddenByFullscreen {
-                    self.hiddenByFullscreen = false
-                    self.overlayWindow.alphaValue = 1.0
-                }
-            }
-
-            let view = self.overlayWindow.catView
-            let physics = view.physics
-            let input = InputEngine.shared
-            let windowFrame = self.overlayWindow.frame
-            let previousMouseMoveTime = input.lastMouseMoveTime
-            let wasBlinking = physics.isBlinking
-            let wasYawning = physics.isYawning
-            physics.step(dt: dt, windowFrameInScreen: windowFrame)
-            view.updateHoverAndClickThrough()
-
-            // Track the mouse at 60 Hz. Ordinary movement away from the pet can share the idle redraw cadence.
-            let lastDirectInput = max(input.lastKeyActivityTime, input.lastMouseClickTime, self.lastDemoKeyTime)
-            let mouseMoving = now - input.lastMouseMoveTime < 0.12
-            let mouseStartedMoving = mouseMoving && now - previousMouseMoveTime >= 0.12
-            let mouseNearPet = mouseMoving && windowFrame.insetBy(dx: -24, dy: -24).contains(input.lastMouseLocation)
-            let isAsleep = physics.sleepiness >= 0.95
-            let isActive = now - lastDirectInput < 0.8 || !input.activeKeys.isEmpty
-                || mouseStartedMoving || mouseNearPet
-                || input.leftMouseDown || input.rightMouseDown || input.otherMouseDown || view.isDraggingOrResizing
-                || !physics.keyGlow.isEmpty || !physics.floatingKeycaps.isEmpty
-                || physics.petHeadIntensity > 0.02 || physics.huntIntensity.value > 0.02
-                || physics.scruffDrag.value > 0.02 || physics.isChangingLie
-                || physics.angerIntensity.value > 0.02 || physics.dizzyIntensity.value > 0.02
-                || wasYawning || physics.isYawning || (!isAsleep && (wasBlinking || physics.isBlinking))
-            let ticksPerRedraw = isActive ? 1 : (isAsleep ? 3 : 2) // 60, 20, or 30 FPS on a 60 Hz tick.
-            self.ticksSinceLastRedraw += 1
-            // Give small idle movements time to accumulate, but refresh at least every 100 ms.
-            if self.ticksSinceLastRedraw >= ticksPerRedraw &&
-                (isActive || self.ticksSinceLastRedraw >= 6 || view.poseNeedsDisplay()) {
-                self.ticksSinceLastRedraw = 0
-                view.needsDisplay = true
-            }
+    /// One-shot timers, re-armed with a state-dependent delay, so the process wakes 15-45 times a
+    /// second depending on activity (10 while hidden).
+    private func scheduleRenderTick(after delay: TimeInterval) {
+        renderTimer?.invalidate()
+        let timer = Timer(timeInterval: delay, repeats: false) { [weak self] _ in
+            guard let self else { return }
+            self.scheduleRenderTick(after: self.renderTick())
         }
         RunLoop.main.add(timer, forMode: .common)
         renderTimer = timer
+    }
+
+    /// Advances the simulation and requests a redraw when needed. Returns the delay until the next tick.
+    private func renderTick() -> TimeInterval {
+        guard isPetVisible else { return 0.1 }
+        let now = CACurrentMediaTime()
+        let dt = CGFloat(now - self.lastFrameTime)
+        self.lastFrameTime = now
+
+        // Fullscreen auto-hide check (~2Hz)
+        if now - self.lastFullscreenCheckTime > 0.5 {
+            self.lastFullscreenCheckTime = now
+            let s = CatSettings.shared
+            let obsBg = (s.obsCaptureMode > 0 && s.obsHideDesktop)
+            if s.autoHideFullscreen && !obsBg {
+                let fs = Self.isOtherAppFullscreen()
+                if fs != self.hiddenByFullscreen {
+                    self.hiddenByFullscreen = fs
+                    self.overlayWindow.alphaValue = fs ? 0.0 : 1.0
+                    if fs { self.overlayWindow.ignoresMouseEvents = true }
+                }
+            } else if self.hiddenByFullscreen {
+                self.hiddenByFullscreen = false
+                self.overlayWindow.alphaValue = 1.0
+            }
+        }
+
+        let view = self.overlayWindow.catView
+        let physics = view.physics
+        let input = InputEngine.shared
+        let windowFrame = self.overlayWindow.frame
+        let previousMouseMoveTime = input.lastMouseMoveTime
+        let wasBlinking = physics.isBlinking
+        let wasYawning = physics.isYawning
+        physics.step(dt: dt, windowFrameInScreen: windowFrame)
+        view.updateHoverAndClickThrough()
+
+        // Track the mouse every tick. Ordinary movement away from the pet can share the idle redraw cadence.
+        let lastDirectInput = max(input.lastKeyActivityTime, input.lastMouseClickTime, self.lastDemoKeyTime)
+        let mouseMoving = now - input.lastMouseMoveTime < 0.12
+        let mouseStartedMoving = mouseMoving && now - previousMouseMoveTime >= 0.12
+        let mouseNearPet = mouseMoving && windowFrame.insetBy(dx: -24, dy: -24).contains(input.lastMouseLocation)
+        let isAsleep = physics.sleepiness >= 0.95
+        let isActive = now - lastDirectInput < 0.8 || !input.activeKeys.isEmpty
+            || mouseStartedMoving
+            || input.leftMouseDown || input.rightMouseDown || input.otherMouseDown || view.isDraggingOrResizing
+            || !physics.keyGlow.isEmpty || !physics.floatingKeycaps.isEmpty
+            || physics.petHeadIntensity > 0.02 || physics.huntIntensity.value > 0.02
+            || physics.scruffDrag.value > 0.02 || physics.isChangingLie
+            || physics.angerIntensity.value > 0.02 || physics.dizzyIntensity.value > 0.02
+            || wasYawning || physics.isYawning || (!isAsleep && (wasBlinking || physics.isBlinking))
+        // Hard caps: 45 FPS while something is animating (typing, clicks, petting, blinking...), 30 FPS when
+        // only following the cursor or calm and awake, 15 FPS asleep. The tick rate matches the redraw cap.
+        let followingCursorOnly = mouseNearPet && !isActive
+        let tickInterval: TimeInterval = isActive ? 1.0 / 45.0 : (isAsleep ? 1.0 / 15.0 : 1.0 / 30.0)
+        let sinceRedraw = now - self.lastRedrawTime
+        // Allow for timer jitter; give small idle movements time to accumulate, but refresh at least every 100 ms.
+        if sinceRedraw >= tickInterval - 0.004 &&
+            (isActive || sinceRedraw >= 0.1 || followingCursorOnly || view.poseNeedsDisplay()) {
+            self.lastRedrawTime = now
+            view.needsDisplay = true
+        }
+        return tickInterval
     }
 
     // MARK: - Menu Bar Icon & Menu
@@ -312,6 +329,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 case .siamese: coatTitle = "Siamese Cat"
                 case .shorthair: coatTitle = "Silver Tabby Shorthair"
                 case .orangeWhite: coatTitle = "Orange & White Cat"
+                case .britishShorthair: coatTitle = "British Shorthair (Gray)"
                 }
             } else {
                 coatTitle = coat.rawValue
@@ -476,9 +494,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         isPetVisible.toggle()
         if isPetVisible {
             lastFrameTime = CACurrentMediaTime()
-            ticksSinceLastRedraw = 0
+            lastRedrawTime = 0
             overlayWindow.catView.needsDisplay = true
             overlayWindow.orderFrontRegardless()
+            scheduleRenderTick(after: 1.0 / 30.0)
         } else {
             overlayWindow.orderOut(nil)
         }
@@ -683,7 +702,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             CatSettings.shared.eyeTheme = .siameseBlue
         case .shorthair:
             CatSettings.shared.eyeTheme = .referenceHazel
-        case .orangeWhite:
+        case .orangeWhite, .britishShorthair:
             CatSettings.shared.eyeTheme = .warmAmber
         }
         dressingRoom?.refresh()

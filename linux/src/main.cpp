@@ -1266,10 +1266,11 @@ static void refreshSettingsWindow(LinuxApp& app) {
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(app.setCoatCombo), tr("挖煤暹罗猫", "Siamese Cat"));
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(app.setCoatCombo), tr("美短（银虎斑加白）", "Silver Tabby Shorthair"));
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(app.setCoatCombo), tr("橘白猫", "Orange & White Cat"));
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(app.setCoatCombo), tr("英短蓝猫（灰毛橘黄瞳）", "British Shorthair (Gray)"));
         int sel = (int)app.settings.coatTheme;
         for (size_t i = 0; i < app.skins.skins.size(); ++i) {
             gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(app.setCoatCombo), app.skins.skins[i].name.c_str());
-            if (!app.settings.customSkin.empty() && app.skins.skins[i].id == app.settings.customSkin) sel = 4 + (int)i;
+            if (!app.settings.customSkin.empty() && app.skins.skins[i].id == app.settings.customSkin) sel = 5 + (int)i;
         }
         gtk_combo_box_set_active(GTK_COMBO_BOX(app.setCoatCombo), sel);
     }
@@ -1284,10 +1285,11 @@ static void refreshSettingsWindow(LinuxApp& app) {
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(app.setKbCombo), tr("经典奶白暖黄", "Classic Milk White"));
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(app.setKbCombo), tr("暗夜极客黑", "Midnight Hacker Black"));
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(app.setKbCombo), tr("复古奶油灰", "Retro Cream Gray"));
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(app.setKbCombo), tr("深灰素色", "Graphite Gray"));
         int sel = (int)app.settings.keyboardTheme;
         for (size_t i = 0; i < app.kbLibrary.skins.size(); ++i) {
             gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(app.setKbCombo), app.kbLibrary.skins[i].name.c_str());
-            if (!app.settings.customKeyboard.empty() && app.kbLibrary.skins[i].id == app.settings.customKeyboard) sel = 3 + (int)i;
+            if (!app.settings.customKeyboard.empty() && app.kbLibrary.skins[i].id == app.settings.customKeyboard) sel = 4 + (int)i;
         }
         gtk_combo_box_set_active(GTK_COMBO_BOX(app.setKbCombo), sel);
     }
@@ -1394,15 +1396,15 @@ static void showSettingsWindow() {
             if (g_app->settingsUpdating) return;
             int idx = gtk_combo_box_get_active(cb);
             if (idx < 0) return;
-            if (idx < 4) {
+            if (idx < 5) {
                 auto coat = (CatCoatTheme)idx;
                 g_app->settings.coatTheme = coat;
                 g_app->settings.customSkin.clear();
                 g_app->settings.eyeTheme = coat == CatCoatTheme::Siamese ? EyeColorTheme::SiameseBlue :
                     (coat == CatCoatTheme::ClassicBlack ? EyeColorTheme::NeonChartreuse :
                     (coat == CatCoatTheme::Shorthair ? EyeColorTheme::ReferenceHazel : EyeColorTheme::WarmAmber));
-            } else if ((size_t)(idx - 4) < g_app->skins.skins.size()) {
-                g_app->settings.customSkin = g_app->skins.skins[idx - 4].id;
+            } else if ((size_t)(idx - 5) < g_app->skins.skins.size()) {
+                g_app->settings.customSkin = g_app->skins.skins[idx - 5].id;
             }
             g_app->settings.save();
             updateInputShape(*g_app);
@@ -1448,11 +1450,11 @@ static void showSettingsWindow() {
             if (g_app->settingsUpdating) return;
             int idx = gtk_combo_box_get_active(cb);
             if (idx < 0) return;
-            if (idx < 3) {
+            if (idx < 4) {
                 g_app->settings.keyboardTheme = (KeyboardTheme)idx;
                 g_app->settings.customKeyboard.clear();
-            } else if ((size_t)(idx - 3) < g_app->kbLibrary.skins.size()) {
-                g_app->settings.customKeyboard = g_app->kbLibrary.skins[idx - 3].id;
+            } else if ((size_t)(idx - 4) < g_app->kbLibrary.skins.size()) {
+                g_app->settings.customKeyboard = g_app->kbLibrary.skins[idx - 4].id;
             }
             g_app->settings.save();
             if (g_app->drawArea) gtk_widget_queue_draw(g_app->drawArea);
@@ -1789,7 +1791,7 @@ static void showPopupMenu(LinuxApp& app, GdkEventButton* evt) {
                 g_app->settings.customSkin.clear();
                 g_app->settings.eyeTheme = coat == CatCoatTheme::Siamese ? EyeColorTheme::SiameseBlue :
                     (coat == CatCoatTheme::ClassicBlack ? EyeColorTheme::NeonChartreuse :
-                    (coat == CatCoatTheme::Shorthair ? EyeColorTheme::ReferenceHazel : EyeColorTheme::WarmAmber));
+                    (coat == CatCoatTheme::Shorthair ? EyeColorTheme::ReferenceHazel : EyeColorTheme::WarmAmber)); // OrangeWhite & BritishShorthair: warm amber
                 g_app->settings.save();
                 updateInputShape(*g_app);
                 refreshDressingRoom(*g_app);
@@ -1800,6 +1802,7 @@ static void showPopupMenu(LinuxApp& app, GdkEventButton* evt) {
         addCoat(tr("挖煤暹罗猫", "Siamese Cat"), CatCoatTheme::Siamese);
         addCoat(tr("美短（银虎斑加白）", "Silver Tabby Shorthair"), CatCoatTheme::Shorthair);
         addCoat(tr("橘白猫", "Orange & White Cat"), CatCoatTheme::OrangeWhite);
+        addCoat(tr("英短蓝猫（灰毛橘黄瞳）", "British Shorthair (Gray)"), CatCoatTheme::BritishShorthair);
         if (!app.skins.skins.empty()) gtk_menu_shell_append(GTK_MENU_SHELL(sub), gtk_separator_menu_item_new());
         for (const SkinSpec& s : app.skins.skins) {
             GtkWidget* it = gtk_check_menu_item_new_with_label(s.name.c_str());
