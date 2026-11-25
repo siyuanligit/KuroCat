@@ -45,7 +45,8 @@ This repo is a fork of `chanke17/KuroCat` (`origin` = `siyuanligit/KuroCat`). La
    - Coat/keyboard/tablet options live in upstream's Settings window (`OverlayWindow.swift`, `windows/src/main.cpp`, `linux/src/main.cpp`), not the old menus. New coats need the English name, eye pairing and combo offsets there too.
    - Built-in coats: keep both sides in `scripts/generate-coat-patterns.py`, then run it and `--check`; never hand-merge `skins/*.kurocat`.
    - macOS render loop: ours is the one-shot adaptive timer (`scheduleRenderTick`/`renderTick`). Upstream edits to the old 60 Hz loop must be ported into `renderTick` by hand (e.g. its `isChangingLie` fix), not taken as-is.
-5. Check: `swiftc -typecheck Sources/*.swift`, `bash scripts/check-skins.sh`, `python3 scripts/generate-coat-patterns.py --check`. Windows and Linux cannot be compiled on a Mac; say so rather than claiming they build.
+5. Builds: this fork only needs the **macOS arm64** build. After a sync, build and verify arm64 only (typecheck plus the arm64 `swiftc` line below). Skip the x86_64 slice, the universal `lipo` step, and the Windows/Linux builds and packages (`build.bat`, `build_deb.sh`, the CI release matrix). Still resolve Windows/Linux conflicts so the fork stays mergeable.
+6. Check: `swiftc -typecheck Sources/*.swift`, `bash scripts/check-skins.sh`, `python3 scripts/generate-coat-patterns.py --check`. Windows and Linux cannot be compiled on a Mac; say so rather than claiming they build.
 
 Known environment issues (not caused by merges):
 - `scripts/check-eye-closure.sh` fails to compile on `main` too (pinned baseline lacks `.graphite`; `check-skins.sh` patches this, this script does not). `check-skins-linux.sh` needs GTK3/Cairo.
