@@ -18,6 +18,7 @@ private struct RenderedPose {
         let showEditControls: Bool
         let englishLabels: Bool
         let tabletActive: Bool
+        let trackpadActive: Bool
     }
 
     let appearance: Appearance
@@ -51,7 +52,8 @@ private struct RenderedPose {
                                 showsLegends: settings.showKeyLegends, size: size, flipped: settings.flipHorizontal,
                                 rotationDeg: settings.rotationDeg, whiteOutline: settings.whiteOutline,
                                 captureMode: settings.obsCaptureMode, showEditControls: settings.isEditMode,
-                                englishLabels: settings.isEnglish, tabletActive: physics.isTabletActive)
+                                englishLabels: settings.isEnglish, tabletActive: physics.isTabletActive,
+                                trackpadActive: physics.isTrackpadActive)
         hasEffects = settings.keyboardMarquee || !physics.sparkles.isEmpty
             || !physics.floatingKeycaps.isEmpty || !physics.keyGlow.isEmpty
             || !physics.tabletTrail.isEmpty || physics.kbSparkTimer > 0.005
@@ -1130,9 +1132,10 @@ final class SettingsWindowController: NSWindowController {
             tabletPopup.addItems(withTitles: [
                 tr("自动检测（连接数位板时切换）", "Auto-Detect When Connected"),
                 tr("始终显示数位板与触控笔", "Always Show Tablet & Stylus"),
-                tr("始终显示鼠标", "Always Show Mouse")
+                tr("始终显示鼠标", "Always Show Mouse"),
+                tr("始终显示触控板", "Always Show Trackpad")
             ])
-            tabletPopup.selectItem(at: max(0, min(2, s.tabletMode)))
+            tabletPopup.selectItem(at: max(0, min(3, s.tabletMode)))
             tabletPopup.target = self
             tabletPopup.action = #selector(onTabletSelected)
             card.addSubview(tabletPopup)
@@ -1345,7 +1348,7 @@ final class SettingsWindowController: NSWindowController {
     }
 
     @objc private func onTabletSelected() {
-        CatSettings.shared.tabletMode = max(0, min(2, tabletPopup.indexOfSelectedItem))
+        CatSettings.shared.tabletMode = max(0, min(3, tabletPopup.indexOfSelectedItem))
         onSettingsChanged?()
     }
 

@@ -339,6 +339,8 @@ final class CatPhysics {
     }
 
     private(set) var isTabletActive = false
+    /// "Always show trackpad" (tabletMode 3): purely visual, the pet still follows the cursor like it does with the mouse.
+    var isTrackpadActive: Bool { CatSettings.shared.tabletMode == 3 }
     var tabletNib = Spring2D(CGPoint(x: 60, y: 261))
     var tabletPenPress = Spring1D(0)
     var tabletPenTilt = Spring1D(0)

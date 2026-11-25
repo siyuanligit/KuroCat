@@ -251,6 +251,8 @@ enum CatRenderer {
                 if physics.isTabletActive {
                     drawTablet(in: ctx, physics: physics, theme: settings.keyboardTheme, eyeTheme: settings.eyeTheme)
                     drawParkedStylus(in: ctx, theme: settings.keyboardTheme, eyeTheme: settings.eyeTheme)
+                } else if physics.isTrackpadActive {
+                    drawTrackpad(in: ctx, physics: physics, kbSkin: kbSkin)
                 } else {
                     drawMouse(in: ctx, physics: physics, kbSkin: kbSkin)
                 }
@@ -278,6 +280,8 @@ enum CatRenderer {
             if !physics.leftPawOnMouse || scruff > 0.25 || dizzy > 0.35 || lie > 0.45 {
                 drawParkedStylus(in: ctx, theme: settings.keyboardTheme, eyeTheme: settings.eyeTheme)
             }
+        } else if physics.isTrackpadActive {
+            drawTrackpad(in: ctx, physics: physics, kbSkin: kbSkin)
         } else {
             drawMouse(in: ctx, physics: physics, kbSkin: kbSkin)
         }
@@ -579,6 +583,65 @@ enum CatRenderer {
         ctx.setStrokeColor(borderColor.cgColor)
         ctx.setLineWidth(1.7)
         ctx.strokeEllipse(in: bodyRect)
+
+        ctx.restoreGState()
+    }
+
+    /// Wide rounded-rect trackpad drawn where the mouse would be. Same skin colours and click flash as the mouse.
+    private static func drawTrackpad(in ctx: CGContext, physics: CatPhysics, kbSkin: KeyboardSkinSpec) {
+        // Fixed in place: unlike the mouse, the trackpad does not follow the paw or dip on click (flash only).
+        let center = CatPhysics.mouseBaseCenter
+
+        ctx.saveGState()
+        ctx.translateBy(x: center.x, y: center.y)
+        ctx.rotate(by: 0.12 + .pi)  // turned 180° so the click-zone seam faces the cat
+
+        let body = CGRect(x: -21, y: -15, width: 42, height: 30)
+        let bodyPath = CGPath(roundedRect: body, cornerWidth: 5, cornerHeight: 5, transform: nil)
+        let bodyColor = kbSkin.mouseBody.ns
+        let borderColor = kbSkin.mouseBorder.ns
+        let flashColor = kbSkin.id == "builtin:3" ? NSColor(calibratedWhite: 1.0, alpha: 0.38)
+                                                  : NSColor(calibratedRed: 0.79, green: 0.95, blue: 0.25, alpha: 0.38)
+
+        // Soft underside shadow
+        ctx.saveGState()
+        ctx.translateBy(x: 0, y: -3.5)  // body is rotated 180°, so this lands below the pad on screen
+        ctx.setFillColor(NSColor(calibratedWhite: 0.0, alpha: 0.24).cgColor)
+        ctx.addPath(bodyPath)
+        ctx.fillPath()
+        ctx.restoreGState()
+
+        ctx.setFillColor(bodyColor.cgColor)
+        ctx.addPath(bodyPath)
+        ctx.fillPath()
+
+        // Click flash: left button = inner right half, right button = outer left half on screen (same as the
+        // mouse). The body is rotated 180°, so the local rects are swapped.
+        for (press, rect) in [(physics.mousePressLeft.value, CGRect(x: -21, y: -15, width: 21, height: 30)),
+                              (physics.mousePressRight.value, CGRect(x: 0, y: -15, width: 21, height: 30))] where press > 0.05 {
+            ctx.saveGState()
+            ctx.addPath(bodyPath)
+            ctx.clip()
+            ctx.setFillColor(flashColor.withAlphaComponent(0.38 * press).cgColor)
+            ctx.fill(rect)
+            ctx.restoreGState()
+        }
+
+        // Inset touch surface and the faint click-zone seam along the front edge
+        let surface = body.insetBy(dx: 3, dy: 3)
+        ctx.setStrokeColor(borderColor.withAlphaComponent(0.22).cgColor)
+        ctx.setLineWidth(0.9)
+        ctx.addPath(CGPath(roundedRect: surface, cornerWidth: 3, cornerHeight: 3, transform: nil))
+        ctx.strokePath()
+        ctx.setStrokeColor(borderColor.withAlphaComponent(0.32).cgColor)
+        ctx.move(to: CGPoint(x: 0, y: 6))
+        ctx.addLine(to: CGPoint(x: 0, y: 12))
+        ctx.strokePath()
+
+        ctx.setStrokeColor(borderColor.cgColor)
+        ctx.setLineWidth(1.7)
+        ctx.addPath(bodyPath)
+        ctx.strokePath()
 
         ctx.restoreGState()
     }
