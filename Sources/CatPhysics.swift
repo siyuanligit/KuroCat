@@ -165,7 +165,7 @@ final class CatSettings {
         tabletMode = d.object(forKey: "KuroCat.TabletMode") as? Int ?? 0
         flipHorizontal = d.object(forKey: "KuroCat.FlipHorizontal") as? Bool ?? false
         rotationDeg = CGFloat(d.object(forKey: "KuroCat.RotationDeg") as? Double ?? 0.0)
-        whiteOutline = d.object(forKey: "KuroCat.WhiteOutline") as? Bool ?? true
+        whiteOutline = d.object(forKey: "KuroCat.WhiteOutline") as? Bool ?? false
         enableAnger = d.object(forKey: "KuroCat.EnableAnger") as? Bool ?? true
         language = d.string(forKey: "KuroCat.Language") ?? "zh"
         petInteraction = d.object(forKey: "KuroCat.PetInteraction") as? Bool ?? true
